@@ -123,26 +123,82 @@
                 <button type="submit" class="btn btn-primary">Назначить</button>
             </form>
             {% if ticket.status == 'in_progress' %}
-            <form method="post" action="{{ url_for('resolve_ticket', ticket_id=ticket.id) }}" class="mb-3">
-                <label for="resolution" class="form-label">Решение</label>
-                <textarea id="resolution" name="resolution" class="form-control" rows="3" placeholder="Опишите решение проблемы..." required></textarea>
-                <button type="submit" class="btn btn-success mt-2">Завершить заявку</button>
-            </form>
+            <button type="button" id="showResolveModalBtn" class="btn btn-success w-100 mb-3">Завершить заявку</button>
             {% endif %}
+
+            <!-- Модальное окно для завершения заявки -->
+            <div id="resolveModal" class="ticket-modal">
+                <div class="ticket-modal-content">
+                    <div class="ticket-modal-header">
+                        <h3>Завершение заявки #{{ ticket.id }}</h3>
+                        <button type="button" class="ticket-modal-close">&times;</button>
+                    </div>
+                    <div class="ticket-modal-body">
+                        <form method="post" action="{{ url_for('resolve_ticket', ticket_id=ticket.id) }}" id="resolveForm">
+                            <div class="form-group">
+                                <label for="resolution" class="form-label">Решение</label>
+                                <textarea id="resolution" name="resolution" class="form-control" rows="5" placeholder="Опишите решение проблемы..." required></textarea>
+                            </div>
+                            <div class="ticket-modal-footer">
+                                <button type="button" class="btn btn-secondary ticket-modal-cancel">Отмена</button>
+                                <button type="submit" class="btn btn-success">Завершить заявку</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
             {% if ticket.status == 'new' or ticket.status == 'in_progress' %}
-            <form method="post" action="{{ url_for('mark_irrelevant', ticket_id=ticket.id) }}" class="mb-3">
-                <label for="irrelevant_reason" class="form-label">Причина (неактуально)</label>
-                <textarea id="irrelevant_reason" name="reason" class="form-control" rows="2" placeholder="Укажите причину..." required></textarea>
-                <button type="submit" class="btn btn-secondary mt-2">Считать неактуальным</button>
-            </form>
+            <button type="button" id="showIrrelevantModalBtn" class="btn btn-secondary w-100 mb-3">Считать неактуальным</button>
             {% endif %}
+
             {% if ticket.status == 'resolved' or ticket.status == 'irrelevant' %}
-            <form method="post" action="{{ url_for('reopen_ticket', ticket_id=ticket.id) }}" class="mb-3">
-                <label for="reopen_reason" class="form-label">Причина (вернуть в работу)</label>
-                <textarea id="reopen_reason" name="reason" class="form-control" rows="2" placeholder="Укажите причину..." required></textarea>
-                <button type="submit" class="btn btn-warning mt-2">Вернуть в работу</button>
-            </form>
+            <button type="button" id="showReopenModalBtn" class="btn btn-warning w-100 mb-3">Вернуть в работу</button>
             {% endif %}
+
+            <!-- Модальное окно для отметки неактуальной -->
+            <div id="irrelevantModal" class="ticket-modal">
+                <div class="ticket-modal-content">
+                    <div class="ticket-modal-header">
+                        <h3>Закрытие заявки #{{ ticket.id }}</h3>
+                        <button type="button" class="ticket-modal-close">&times;</button>
+                    </div>
+                    <div class="ticket-modal-body">
+                        <form method="post" action="{{ url_for('mark_irrelevant', ticket_id=ticket.id) }}" id="irrelevantForm">
+                            <div class="form-group">
+                                <label for="irrelevant_reason" class="form-label">Причина закрытия</label>
+                                <textarea id="irrelevant_reason" name="reason" class="form-control" rows="4" placeholder="Укажите причину почему заявка неактуальна..." required></textarea>
+                            </div>
+                            <div class="ticket-modal-footer">
+                                <button type="button" class="btn btn-primary ticket-modal-cancel">Отмена</button>
+                                <button type="submit" class="btn btn-secondary">Считать неактуальным</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Модальное окно для возврата в работу -->
+            <div id="reopenModal" class="ticket-modal">
+                <div class="ticket-modal-content">
+                    <div class="ticket-modal-header">
+                        <h3>Возврат заявки #{{ ticket.id }} в работу</h3>
+                        <button type="button" class="ticket-modal-close">&times;</button>
+                    </div>
+                    <div class="ticket-modal-body">
+                        <form method="post" action="{{ url_for('reopen_ticket', ticket_id=ticket.id) }}" id="reopenForm">
+                            <div class="form-group">
+                                <label for="reopen_reason" class="form-label">Причина возврата в работу</label>
+                                <textarea id="reopen_reason" name="reason" class="form-control" rows="4" placeholder="Укажите причину возврата заявки в работу..." required></textarea>
+                            </div>
+                            <div class="ticket-modal-footer">
+                                <button type="button" class="btn btn-secondary ticket-modal-cancel">Отмена</button>
+                                <button type="submit" class="btn btn-warning">Вернуть в работу</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -154,46 +210,376 @@
     display: flex;
     flex-direction: row;
     align-items: stretch;
-    gap: 32px;
+    gap: 24px;
     width: 100%;
     min-height: 90vh;
-    padding-left: 32px;
-    padding-right: 32px;
+    padding: 0 24px 24px;
     box-sizing: border-box;
     background: none;
 }
 .ticket-col {
     background: var(--bg-card);
-    border-radius: 1.2rem;
-    box-shadow: 0 4px 24px 0 rgba(0,0,0,0.10);
-    padding: 2.2rem 2rem 1.5rem 2rem;
+    border-radius: 1rem;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
+    padding: 1.8rem;
     display: flex;
     flex-direction: column;
     min-width: 0;
     height: 100%;
+    transition: box-shadow 0.2s;
 }
-.ticket-info, .ticket-management {
-    flex: 0 0 180px;
-    min-width: 180px;
-    max-width: 180px;
-    height: 100%;
-    margin: 0;
+.ticket-col:hover {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+.ticket-info {
+    flex: 0 0 300px;
+    min-width: 280px;
+    max-width: 320px;
+}
+.ticket-management {
+    flex: 0 0 260px;
+    min-width: 240px;
+    max-width: 280px;
 }
 .ticket-chat {
     flex: 1 1 0;
     min-width: 0;
-    max-width: none;
-    height: 100%;
+}
+
+.ticket-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 1.2rem;
+}
+
+.ticket-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background: var(--bg-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.ticket-meta > div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ticket-meta b {
+    min-width: 100px;
+    font-weight: 600;
+}
+
+.ticket-section {
+    margin-bottom: 1.5rem;
+}
+
+.ticket-section h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-color);
+}
+
+.ticket-description, .ticket-resolution {
+    background: var(--bg-secondary);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.attachments-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    list-style: none;
+    padding: 0;
     margin: 0;
-    padding-left: 0;
-    padding-right: 0;
 }
-@media (max-width: 1200px) {
-    .ticket-full-3col { flex-direction: column; gap: 1.2rem; width: 100%; margin: 0; padding-left: 8px; padding-right: 8px;}
-    .ticket-col { max-width: 100%; min-width: 0; }
-    .ticket-info, .ticket-management { max-width: 100%; min-width: 0; }
-    .ticket-chat { max-width: 100%; min-width: 0; }
+
+.attachment-item {
+    width: 120px;
 }
+
+.attachment-link {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: var(--text-color);
+}
+
+.attachment-preview {
+    width: 100%;
+    height: 100px;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    margin-bottom: 5px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+}
+
+.attachment-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.attachment-name {
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+}
+
+/* Chat section styles */
+.chat-messages {
+    height: 260px;
+    overflow-y: auto;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.chat-message {
+    padding: 12px 15px;
+    border-radius: 12px;
+    position: relative;
+    max-width: 80%;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.user-message {
+    align-self: flex-start;
+    background: rgba(37, 99, 235, 0.1);
+    border-bottom-left-radius: 4px;
+}
+
+.admin-message {
+    align-self: flex-end;
+    background: rgba(16, 185, 129, 0.1);
+    border-bottom-right-radius: 4px;
+}
+
+body.dark-theme .user-message {
+    background: rgba(37, 99, 235, 0.2);
+}
+
+body.dark-theme .admin-message {
+    background: rgba(16, 185, 129, 0.2);
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    font-size: 0.8rem;
+}
+
+.message-sender {
+    font-weight: 600;
+}
+
+.message-time {
+    color: var(--text-muted);
+}
+
+.message-content {
+    word-break: break-word;
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
+.chat-empty {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 2rem;
+}
+
+.chat-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.chat-form textarea {
+    width: 100%;
+    border-radius: 0.5rem;
+    padding: 12px 15px;
+    resize: vertical;
+    min-height: 60px;
+}
+
+.chat-form-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Tabs for chat */
+.tabs {
+    display: flex;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 2;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px 15px;
+    background: transparent;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    position: relative;
+    color: var(--text-muted);
+}
+
+.tab-btn:hover {
+    background: rgba(0,0,0,0.03);
+}
+
+.tab-btn.active {
+    color: var(--primary-color);
+    background: var(--bg-card);
+}
+
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--primary-color);
+}
+
+body.dark-theme .tab-btn:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Modal styles */
+.ticket-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    animation: fade-in 0.3s ease;
+}
+
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.ticket-modal-content {
+    background-color: var(--bg-card);
+    border-radius: 1rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slide-up 0.3s ease;
+}
+
+@keyframes slide-up {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.ticket-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.ticket-modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.ticket-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.ticket-modal-close:hover {
+    background-color: var(--bg-secondary);
+    color: var(--text-color);
+}
+
+.ticket-modal-body {
+    padding: 1.5rem;
+}
+
+.ticket-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 1.5rem;
+}
+
+.w-100 {
+    width: 100%;
+}
+
+/* Modal responsive styles */
+@media (max-width: 600px) {
+    .ticket-modal-content {
+        width: 95%;
+        max-height: 85vh;
+    }
+}
+
+/* Management section styles */
 .select-assignee {
     min-width: 120px;
     max-width: 100%;
@@ -201,6 +587,26 @@
     margin-bottom: 0.5rem;
     background-image: none !important;
     padding-right: 1rem !important;
+}
+
+@media (max-width: 1200px) {
+    .ticket-full-3col {
+        flex-direction: column;
+        gap: 20px;
+        padding: 0 12px 12px;
+    }
+    .ticket-col {
+        max-width: 100%;
+        min-width: 0;
+    }
+    .ticket-info, .ticket-management {
+        max-width: 100%;
+        min-width: 0;
+    }
+    .ticket-chat {
+        max-width: 100%;
+        min-width: 0;
+    }
 }
 </style>
 {% endblock %}
@@ -220,6 +626,53 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById(target).classList.add('active');
         });
     });
+
+    // Модальные окна
+    // Функция для всех модалок
+    function setupModal(modalId, triggerBtnId) {
+        const modal = document.getElementById(modalId);
+        const triggerBtn = document.getElementById(triggerBtnId);
+        const closeBtn = modal.querySelector('.ticket-modal-close');
+        const cancelBtns = modal.querySelectorAll('.ticket-modal-cancel');
+
+        // Открытие модального окна
+        if (triggerBtn) {
+            triggerBtn.addEventListener('click', function() {
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden'; // Предотвращаем прокрутку страницы
+            });
+        }
+
+        // Закрытие по кнопке закрытия
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            });
+        }
+
+        // Закрытие по кнопкам отмены
+        cancelBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            });
+        });
+
+        // Закрытие по клику вне модального окна
+        modal.addEventListener('click', function(event) {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        });
+    }
+
+    // Настройка всех модальных окон
+    setupModal('resolveModal', 'showResolveModalBtn');
+    setupModal('irrelevantModal', 'showIrrelevantModalBtn');
+    setupModal('reopenModal', 'showReopenModalBtn');
+
     // AJAX-отправка сообщений в чатах (оставляем как было)
 });
 </script>

@@ -72,29 +72,130 @@
 
 {% block extra_css %}
 <style>
+    /* Page layout */
+    .d-flex.align-center.justify-between {
+        margin-bottom: 1.5rem;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-color);
+    }
+
+    /* Card styles */
+    .card {
+        border-radius: 1rem;
+        box-shadow: var(--card-shadow);
+        margin-bottom: 2rem;
+        overflow: hidden;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    /* User actions */
+    .user-actions {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .user-actions .btn {
+        min-width: 180px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .user-actions .btn::before {
+        content: '+';
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+
+    /* Table styles */
+    .table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-bottom: 0;
+    }
+
+    .table th {
+        background-color: var(--bg-secondary);
+        padding: 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        white-space: nowrap;
+    }
+
+    .table td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+
+    .table tbody tr {
+        border-bottom: 1px solid var(--border-color);
+        transition: background-color 0.2s;
+    }
+
+    .table tbody tr:hover {
+        background-color: rgba(0,0,0,0.02);
+    }
+
+    /* Badge styling */
+    .badge {
+        min-width: 80px;
+        text-align: center;
+        padding: 0.35rem 0.75rem;
+    }
+
+    /* Action buttons */
+    .btn-secondary.btn-sm {
+        background-color: transparent;
+        color: var(--primary-color);
+        border: 1px solid var(--primary-color);
+        transition: all 0.2s;
+        min-width: 110px;
+        text-align: center;
+    }
+
+    .btn-secondary.btn-sm:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    body.dark-theme .btn-secondary.btn-sm:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
     /* Responsive table */
     .table-responsive {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+        margin: 0;
+        border-radius: 0.5rem;
     }
 
-    /* Дополнительные стили для темной темы таблицы */
-    body.dark-theme .table td,
-    body.dark-theme .table th {
-        color: var(--text-color) !important;
+    /* Empty state */
+    .text-center {
+        padding: 2rem;
+        color: var(--text-muted);
+        font-size: 1.1rem;
     }
 
-    body.dark-theme .table th {
-        background-color: rgba(255, 255, 255, 0.05) !important;
-        color: var(--text-muted) !important;
-    }
-
-    body.dark-theme .table tr {
-        background-color: var(--bg-card) !important;
-    }
-
-    body.dark-theme .table tr:hover {
-        background-color: rgba(255, 255, 255, 0.05) !important;
+    /* Dark theme adaptations */
+    body.dark-theme .table tbody tr:hover {
+        background-color: rgba(255,255,255,0.05);
     }
 </style>
 {% endblock %}

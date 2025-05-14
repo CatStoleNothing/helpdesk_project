@@ -185,7 +185,7 @@
     {% if current_user.is_authenticated %}
     {% block breadcrumbs_container %}
     <div class="breadcrumbs">
-        <div class="breadcrumbs-container">
+        <div class="breadcrumbs-container compact-header">
             <div class="breadcrumbs-left">
                 <div class="logo">
                     <a href="{{ url_for('dashboard') }}">
@@ -222,7 +222,7 @@
                     <i class="fas fa-moon"></i>
                 </button>
 
-                <a href="{{ url_for('logout') }}" class="btn btn-secondary">Выйти</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm">Выйти</a>
             </div>
         </div>
     </div>

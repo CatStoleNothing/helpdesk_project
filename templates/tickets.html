@@ -235,71 +235,138 @@
 
 {% block extra_css %}
 <style>
-    .filter-controls {
-        display: flex;
-        gap: 0.5rem;
+    /* Card styles */
+    .card {
+        margin-bottom: 2rem;
     }
 
-    .pagination {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 1rem;
+    .card-header {
+        background-color: var(--bg-card);
+        padding: 1.2rem 1.5rem;
     }
 
-    .pagination-info {
-        font-size: 0.875rem;
-        color: var(--text-muted);
+    /* Filter controls */
+    .filters-header {
+        margin-bottom: 1rem;
     }
 
-    /* Стили для фильтров */
     .filters-form {
-        margin-top: 1rem;
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background-color: var(--bg-secondary);
+        border-radius: 0.75rem;
     }
 
     .filters-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        gap: 1rem;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.25rem;
     }
 
     .filter-group {
-        margin-bottom: 0.75rem;
+        margin-bottom: 1rem;
     }
 
     .filter-group label {
         display: block;
-        margin-bottom: 0.3rem;
-        font-weight: 500;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
         font-size: 0.9rem;
         color: var(--text-color);
     }
 
     .filter-actions {
         display: flex;
-        gap: 0.5rem;
+        gap: 1rem;
+        margin-top: 1.5rem;
     }
 
     .filter-tags {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.5rem;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background-color: var(--bg-secondary);
+        border-radius: 0.75rem;
     }
 
     .filter-tag {
         background-color: rgba(37, 99, 235, 0.1);
         color: var(--text-color);
-        padding: 0.3rem 0.7rem;
+        padding: 0.5rem 1rem;
         border-radius: 2rem;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
+        font-weight: 500;
         display: inline-flex;
         align-items: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border: 1px solid rgba(37, 99, 235, 0.15);
     }
 
-    /* Responsive table */
-    .table-responsive {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+    body.dark-theme .filter-tag {
+        background-color: rgba(59, 130, 246, 0.15);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    /* Table styles */
+    .tickets-table {
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .tickets-table th {
+        background-color: var(--bg-secondary);
+        padding: 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        white-space: nowrap;
+    }
+
+    .tickets-table td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+
+    .tickets-table tbody tr {
+        border-bottom: 1px solid var(--border-color);
+        transition: background-color 0.2s;
+    }
+
+    .tickets-table tbody tr:hover {
+        background-color: rgba(0,0,0,0.02);
+    }
+
+    body.dark-theme .tickets-table tbody tr:hover {
+        background-color: rgba(255,255,255,0.05);
+    }
+
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .pagination-info {
+        font-size: 0.95rem;
+        color: var(--text-muted);
+        background: var(--bg-secondary);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+    }
+
+    /* Button styles */
+    .btn-view {
+        min-width: 110px;
+        text-align: center;
     }
 
     /* Position utilities */
@@ -314,37 +381,25 @@
 
     .filter-group input[list] {
         width: 100%;
-        padding-right: 30px;
+        padding-right: 2rem;
+        position: relative;
     }
 
-    .filter-group input[list]:after {
-        content: '▼';
+    .filter-group .custom-select-icon {
         position: absolute;
-        right: 10px;
+        right: 0.75rem;
         top: 50%;
         transform: translateY(-50%);
         pointer-events: none;
-        font-size: 0.8rem;
         color: var(--text-muted);
     }
 
-    /* Дополнительные стили для темной темы таблицы */
-    body.dark-theme .table td,
-    body.dark-theme .table th {
-        color: var(--text-color) !important;
-    }
-
-    body.dark-theme .table th {
-        background-color: rgba(255, 255, 255, 0.05) !important;
-        color: var(--text-muted) !important;
-    }
-
-    body.dark-theme .table tr {
-        background-color: var(--bg-card) !important;
-    }
-
-    body.dark-theme .table tr:hover {
-        background-color: rgba(255, 255, 255, 0.05) !important;
+    /* Responsive table */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0;
+        border-radius: 0.5rem;
     }
 </style>
 {% endblock %}
