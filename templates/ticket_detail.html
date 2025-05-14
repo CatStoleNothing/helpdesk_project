@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+
+{% block title %}Заявка #{{ ticket.id }} | Система заявок ОБУЗ КГКБСМП{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumbs-item"><a href="{{ url_for('dashboard') }}">Панель управления</a></li>
+<li class="breadcrumbs-item"><a href="{{ url_for('tickets') }}">Заявки</a></li>
+<li class="breadcrumbs-item">Заявка #{{ ticket.id }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="ticket-full-3col">
+    <div class="ticket-col ticket-info">
+        <h1 class="ticket-title mb-3">Заявка #{{ ticket.id }}</h1>
+        <div class="ticket-meta mb-3">
+            <div><b>Создатель:</b> {{ creator_name }}</div>
+            <div><b>Создано:</b> {{ ticket.created_at.strftime('%d.%m.%Y %H:%M') }}</div>
+            <div><b>Обновлено:</b> {{ ticket.updated_at.strftime('%d.%m.%Y %H:%M') }}</div>
+            <div><b>Категория:</b> {{ category.name if category else 'Не указана' }}</div>
+            <div><b>Приоритет:</b> {% if ticket.priority == 'low' %}<span class="badge bg-success">Низкий</span>{% elif ticket.priority == 'normal' %}<span class="badge bg-primary">Средний</span>{% elif ticket.priority == 'high' %}<span class="badge bg-danger">Высокий</span>{% else %}<span class="badge bg-secondary">Не указан</span>{% endif %}</div>
+            <div><b>Статус:</b> <span class="badge badge-{% if ticket.status == 'new' %}primary{% elif ticket.status == 'in_progress' %}warning{% elif ticket.status == 'resolved' %}success{% else %}secondary{% endif %}">{% if ticket.status == 'new' %}Новая{% elif ticket.status == 'in_progress' %}В работе{% elif ticket.status == 'resolved' %}Решена{% else %}Закрыта{% endif %}</span></div>
+            <div><b>Назначено:</b> {{ assignee.full_name if assignee else 'Не назначено' }}</div>
+        </div>
+        <div class="ticket-section mb-4">
+            <h2>Описание</h2>
+            <div class="ticket-description">{{ ticket.description|nl2br }}</div>
+        </div>
+        {% if ticket.resolution %}
+        <div class="ticket-section mb-4">
+            <h2>Решение</h2>
+            <div class="ticket-resolution">{{ ticket.resolution|nl2br }}</div>
+        </div>
+        {% endif %}
+        {% if ticket.attachments %}
+        <div class="ticket-section mb-4">
+            <h2>Вложения</h2>
+            <ul class="attachments-list">
+                {% for attachment in ticket.attachments %}
+                <li class="attachment-item">
+                    <a href="/{{ attachment.file_path }}" target="_blank" class="attachment-link">
+                        {% if 'image' in attachment.file_type %}
+                        <div class="attachment-preview"><img src="/{{ attachment.file_path }}" alt="{{ attachment.file_name }}"></div>
+                        {% endif %}
+                        <span class="attachment-name">{{ attachment.file_name }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+    <div class="ticket-col ticket-chat">
+        <div class="ticket-section mb-4">
+            <div class="d-flex align-center justify-between mb-2">
+                <h2>Чат по заявке</h2>
+                <a href="{{ url_for('tickets') }}" class="btn btn-secondary btn-sm">Назад к списку</a>
+            </div>
+            <div class="tabs mb-2">
+                <button class="tab-btn active" data-target="user-chat-tab" type="button">Чат с пользователем</button>
+                <button class="tab-btn" data-target="internal-chat-tab" type="button">Внутренний чат</button>
+            </div>
+            <div id="user-chat-tab" class="tab-content active">
+                <div class="chat-messages mb-2">
+                    {% set external_messages = ticket.messages|selectattr('is_internal', 'equalto', false)|list %}
+                    {% if external_messages %}
+                        {% for message in external_messages %}
+                        <div class="chat-message user-message" id="message-{{ message.id }}">
+                            <div class="message-header">
+                                <span class="message-sender">{{ message.sender_name }}</span>
+                                <span class="message-time">{{ message.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                            </div>
+                            <div class="message-content">{{ message.content|nl2br }}</div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="chat-empty">Нет сообщений в чате с пользователем.</div>
+                    {% endif %}
+                </div>
+                <form method="post" action="{{ url_for('send_chat_message') }}" class="chat-form">
+                    <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
+                    <input type="hidden" name="is_internal" value="false">
+                    <textarea name="message" class="form-control" rows="2" placeholder="Введите сообщение..." required></textarea>
+                    <div class="chat-form-actions"><button type="submit" class="btn btn-primary">Отправить сообщение</button></div>
+                </form>
+            </div>
+            <div id="internal-chat-tab" class="tab-content">
+                <div class="chat-messages mb-2">
+                    {% set internal_messages = ticket.messages|selectattr('is_internal', 'equalto', true)|list %}
+                    {% if internal_messages %}
+                        {% for message in internal_messages %}
+                        <div class="chat-message admin-message" id="message-{{ message.id }}">
+                            <div class="message-header">
+                                <span class="message-sender">{{ message.sender_name }}</span>
+                                <span class="message-time">{{ message.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                            </div>
+                            <div class="message-content">{{ message.content|nl2br }}</div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="chat-empty">Нет сообщений во внутреннем чате.</div>
+                    {% endif %}
+                </div>
+                <form method="post" action="{{ url_for('send_chat_message') }}" class="chat-form">
+                    <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
+                    <input type="hidden" name="is_internal" value="true">
+                    <textarea name="message" class="form-control mention-input" rows="2" placeholder="Введите сообщение... Используйте @ для упоминания коллег" required></textarea>
+                    <div class="chat-form-actions"><button type="submit" class="btn btn-primary">Отправить сообщение</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="ticket-col ticket-management">
+        <div class="ticket-section mb-4">
+            <h2>Управление заявкой</h2>
+            <form method="post" action="{{ url_for('assign_ticket', ticket_id=ticket.id) }}" class="d-flex flex-column gap-2 mb-3">
+                <label for="assigned_to" class="form-label">Исполнитель</label>
+                <select id="assigned_to" name="assigned_to" class="form-control select-assignee">
+                    <option value="">-- Не назначено --</option>
+                    {% for staff_member in staff %}
+                    <option value="{{ staff_member.id }}" {% if assignee and assignee.id == staff_member.id %}selected{% endif %}>{{ staff_member.full_name }} ({{ staff_member.role }})</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary">Назначить</button>
+            </form>
+            {% if ticket.status == 'in_progress' %}
+            <form method="post" action="{{ url_for('resolve_ticket', ticket_id=ticket.id) }}" class="mb-3">
+                <label for="resolution" class="form-label">Решение</label>
+                <textarea id="resolution" name="resolution" class="form-control" rows="3" placeholder="Опишите решение проблемы..." required></textarea>
+                <button type="submit" class="btn btn-success mt-2">Завершить заявку</button>
+            </form>
+            {% endif %}
+            {% if ticket.status == 'new' or ticket.status == 'in_progress' %}
+            <form method="post" action="{{ url_for('mark_irrelevant', ticket_id=ticket.id) }}" class="mb-3">
+                <label for="irrelevant_reason" class="form-label">Причина (неактуально)</label>
+                <textarea id="irrelevant_reason" name="reason" class="form-control" rows="2" placeholder="Укажите причину..." required></textarea>
+                <button type="submit" class="btn btn-secondary mt-2">Считать неактуальным</button>
+            </form>
+            {% endif %}
+            {% if ticket.status == 'resolved' or ticket.status == 'irrelevant' %}
+            <form method="post" action="{{ url_for('reopen_ticket', ticket_id=ticket.id) }}" class="mb-3">
+                <label for="reopen_reason" class="form-label">Причина (вернуть в работу)</label>
+                <textarea id="reopen_reason" name="reason" class="form-control" rows="2" placeholder="Укажите причину..." required></textarea>
+                <button type="submit" class="btn btn-warning mt-2">Вернуть в работу</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.ticket-full-3col {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 32px;
+    width: 100%;
+    min-height: 90vh;
+    padding-left: 32px;
+    padding-right: 32px;
+    box-sizing: border-box;
+    background: none;
+}
+.ticket-col {
+    background: var(--bg-card);
+    border-radius: 1.2rem;
+    box-shadow: 0 4px 24px 0 rgba(0,0,0,0.10);
+    padding: 2.2rem 2rem 1.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: 100%;
+}
+.ticket-info, .ticket-management {
+    flex: 0 0 180px;
+    min-width: 180px;
+    max-width: 180px;
+    height: 100%;
+    margin: 0;
+}
+.ticket-chat {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: none;
+    height: 100%;
+    margin: 0;
+    padding-left: 0;
+    padding-right: 0;
+}
+@media (max-width: 1200px) {
+    .ticket-full-3col { flex-direction: column; gap: 1.2rem; width: 100%; margin: 0; padding-left: 8px; padding-right: 8px;}
+    .ticket-col { max-width: 100%; min-width: 0; }
+    .ticket-info, .ticket-management { max-width: 100%; min-width: 0; }
+    .ticket-chat { max-width: 100%; min-width: 0; }
+}
+.select-assignee {
+    min-width: 120px;
+    max-width: 100%;
+    font-size: 1.05rem;
+    margin-bottom: 0.5rem;
+    background-image: none !important;
+    padding-right: 1rem !important;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Табы для чата
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const target = this.dataset.target;
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById(target).classList.add('active');
+        });
+    });
+    // AJAX-отправка сообщений в чатах (оставляем как было)
+});
+</script>
+{% endblock %}

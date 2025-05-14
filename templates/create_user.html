@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+
+{% block title %}Добавление пользователя | Система заявок ОБУЗ КГКБСМП{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumbs-item"><a href="{{ url_for('dashboard') }}">Панель управления</a></li>
+<li class="breadcrumbs-item"><a href="{{ url_for('users') }}">Пользователи</a></li>
+<li class="breadcrumbs-item">Создание пользователя</li>
+{% endblock %}
+
+{% block content %}
+<div class="header-container mb-4">
+    <h1 class="page-title">Создание пользователя</h1>
+
+    <div class="user-actions">
+        <a href="{{ url_for('users') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Назад к списку
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h3 class="card-title mb-0">Данные пользователя</h3>
+    </div>
+    <div class="card-body">
+        <form method="post" action="{{ url_for('create_user') }}">
+            <!-- Основная информация -->
+            <div class="section mb-5">
+                <h4 class="section-title">Основная информация</h4>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="full_name" class="form-label fw-bold">ФИО *</label>
+                            <input type="text" id="full_name" name="full_name" class="form-control form-control-lg" required>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="role" class="form-label fw-bold">Роль *</label>
+                            <select id="role" name="role" class="form-control form-control-lg" required>
+                                <option value="agent">Агент</option>
+                                <option value="admin">Администратор</option>
+                                <option value="curator">Куратор</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mt-3">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="position" class="form-label fw-bold">Должность</label>
+                            <input type="text" id="position" name="position" class="form-control form-control-lg">
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="department" class="form-label fw-bold">Отделение</label>
+                            <input type="text" id="department" name="department" class="form-control form-control-lg">
+                            <small class="form-text text-muted">Можно оставить пустым</small>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="office" class="form-label fw-bold">Кабинет</label>
+                            <input type="text" id="office" name="office" class="form-control form-control-lg">
+                            <small class="form-text text-muted">Можно оставить пустым</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Данные для входа -->
+            <div class="section account-section mb-5">
+                <h4 class="section-title">Данные для входа</h4>
+                <p class="mb-4 text-info">
+                    <i class="fas fa-info-circle"></i>
+                    Данные для входа необходимы только для администраторов и кураторов.
+                </p>
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="username" class="form-label fw-bold">Имя пользователя</label>
+                            <input type="text" id="username" name="username" class="form-control form-control-lg">
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="password" class="form-label fw-bold">Пароль</label>
+                            <div class="input-group input-group-lg">
+                                <input type="password" id="password" name="password" class="form-control form-control-lg">
+                                <button type="button" class="btn btn-outline-secondary toggle-password" tabindex="-1" title="Показать/скрыть пароль">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions mt-4">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus-circle"></i> Создать пользователя
+                </button>
+                <a href="{{ url_for('users') }}" class="btn btn-secondary btn-lg ms-2">
+                    <i class="fas fa-times"></i> Отмена
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--text-color);
+    }
+
+    .section {
+        margin-bottom: 2.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .section:last-child {
+        border-bottom: none;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: var(--primary-color);
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--primary-color);
+        display: inline-block;
+    }
+
+    .account-section {
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        background-color: var(--bg-secondary);
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        border-left: 4px solid var(--primary-color);
+    }
+
+    body.dark-theme .account-section {
+        background-color: var(--bg-card);
+        border-color: var(--border-color);
+    }
+
+    .form-label {
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+        color: var(--form-label-color);
+    }
+
+    .form-label.fw-bold {
+        font-weight: 600;
+    }
+
+    .form-actions {
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: flex-start;
+    }
+
+    .btn {
+        font-weight: 500;
+        padding: 0.75rem 1.25rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .text-info {
+        color: var(--primary-color);
+    }
+
+    .row.g-4 {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 0 -0.75rem;
+    }
+
+    .row.g-4 > div {
+        padding: 0 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .header-container {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .section {
+            padding: 1rem;
+        }
+
+        .row.g-4 {
+            margin: 0 -0.5rem;
+        }
+
+        .row.g-4 > div {
+            padding: 0 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Show/hide username and password fields based on role
+        const roleSelect = document.getElementById('role');
+        const usernameField = document.getElementById('username');
+        const passwordField = document.getElementById('password');
+
+        function updateFieldsVisibility() {
+            const isAgentRole = roleSelect.value === 'agent';
+
+            if (isAgentRole) {
+                usernameField.removeAttribute('required');
+                passwordField.removeAttribute('required');
+            } else {
+                usernameField.setAttribute('required', 'required');
+                passwordField.setAttribute('required', 'required');
+            }
+        }
+
+        roleSelect.addEventListener('change', updateFieldsVisibility);
+        updateFieldsVisibility();
+
+        // Toggle password visibility
+        const toggleButtons = document.querySelectorAll('.toggle-password');
+        toggleButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const input = this.closest('.input-group').querySelector('input');
+                const icon = this.querySelector('i');
+
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

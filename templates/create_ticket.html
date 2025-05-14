@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Создать заявку{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Создать новую заявку</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('create_ticket') }}">
+                        <div class="form-group mb-3">
+                            <label for="title">Тема заявки</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+
+                        <!-- Добавляем выбор категории -->
+                        <div class="form-group mb-3">
+                            <label for="category_id">Категория</label>
+                            <select class="form-control" id="category_id" name="category_id" required>
+                                <option value="">-- Выберите категорию --</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Добавляем выбор приоритета -->
+                        <div class="form-group mb-3">
+                            <label for="priority">Приоритет</label>
+                            <select class="form-control" id="priority" name="priority">
+                                <option value="low">Низкий</option>
+                                <option value="normal" selected>Средний</option>
+                                <option value="high">Высокий</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="description">Описание проблемы</label>
+                            <textarea class="form-control" id="description" name="description" rows="5" required></textarea>
+                        </div>
+
+                        {% if users %}
+                        <!-- Для админов и кураторов: выбор создателя -->
+                        <div class="form-group mb-3">
+                            <label for="creator_id">Создатель заявки</label>
+                            <select class="form-control" id="creator_id" name="creator_id" required>
+                                <option value="">-- Выберите сотрудника --</option>
+                                {% for user in users %}
+                                <option value="{{ user.chat_id }}">{{ user.full_name }}{% if user.position %} ({{ user.position }}){% endif %}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% else %}
+                        <!-- Для обычного пользователя: скрытое поле -->
+                        <input type="hidden" name="creator_id" value="{{ current_user.chat_id }}">
+                        {% endif %}
+
+                        <div class="form-group mb-3">
+                            <label for="status">Статус</label>
+                            <select class="form-control" id="status" name="status">
+                                <option value="new" selected>Новая</option>
+                                <option value="in_progress">В работе</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Создать заявку</button>
+                        <a href="{{ url_for('tickets') }}" class="btn btn-secondary">Отмена</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

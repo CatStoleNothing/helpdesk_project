@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+  <h3>Заявки на регистрацию</h3>
+  {% if new_users %}
+    <table class="table table-bordered mt-3">
+      <thead><tr><th>ФИО</th><th>Login</th><th>Роль</th><th>Заявка</th><th></th></tr></thead>
+      <tbody>
+        {% for u in new_users %}
+        <tr>
+          <td>{{u.full_name}}</td>
+          <td>{{u.username}}</td>
+          <td>{{u.role}}</td>
+          <td>{% if not u.is_confirmed and u.is_active %}На рассмотрении{% endif %}</td>
+          <td>
+            <form method="post" style="display:inline;">
+              <input type="hidden" name="user_id" value="{{u.id}}"/>
+              <button name="action" value="approve" class="btn btn-success btn-sm" onclick="return confirm('Подтвердить?')">Одобрить</button>
+              <button name="action" value="reject" class="btn btn-danger btn-sm" onclick="return confirm('Отклонить и заблокировать?')">Отклонить</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>Нет новых заявок.</p>
+  {% endif %}
+
+  <h4 class="mt-4">Отклонённые и заблокированные</h4>
+  {% if rejected_users %}
+    <table class="table table-striped">
+      <thead><tr><th>ФИО</th><th>Login</th><th>Роль</th><th>Статус</th><th></th></tr></thead>
+      <tbody>
+      {% for u in rejected_users %}
+        <tr>
+          <td>{{u.full_name}}</td><td>{{u.username}}</td><td>{{u.role}}</td><td>Заблокирован</td>
+          <td>
+            <form method="post" style="display:inline">
+              <input type="hidden" name="user_id" value="{{u.id}}"/>
+              <button name="action" value="unlock" class="btn btn-info btn-sm" onclick="return confirm('Разблокировать?')">Разблокировать</button>
+              <button name="action" value="reconsider" class="btn btn-warning btn-sm" onclick="return confirm('Вернуть в рассмотрение?')">В рассмотрение</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}<p>Нет заблокированных или отклонённых заявок.</p>{% endif %}
+
+  <h4 class="mt-4">Подтверждённые пользователи</h4>
+  <table class="table table-sm table-hover">
+    <thead><tr><th>ФИО</th><th>Login</th><th>Роль</th><th>Статус</th></tr></thead>
+    <tbody>
+      {% for u in approved_users %}
+        <tr><td>{{u.full_name}}</td><td>{{u.username}}</td><td>{{u.role}}</td><td>Подтверждён</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h5 class="mt-5">История действий по заявкам</h5>
+  <table class="table table-bordered">
+    <thead><tr><th>Когда</th><th>Пользователь</th><th>Действие</th><th>Администратор</th></tr></thead>
+    <tbody>
+      {% for a in actions %}
+        <tr>
+          <td>{{a.timestamp.strftime('%d.%m.%Y %H:%M')}}</td>
+          <td>{{a.entity_id}}</td>
+          <td>{{a.description}}</td>
+          <td>{{a.actor_name}}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

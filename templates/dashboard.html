@@ -1,0 +1,1393 @@
+{% extends 'base.html' %}
+
+{% block title %}Панель управления | Система заявок ОБУЗ КГКБСМП{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumbs-item">Панель управления</li>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-main">
+        <h1>Панель управления</h1>
+
+        <div class="stats-overview">
+            <div class="stats-card">
+                <div class="stats-icon">
+                    <i class="fas fa-ticket-alt"></i>
+                </div>
+                <div class="stats-content">
+                    <div class="stats-value">{{ total_tickets }}</div>
+                    <div class="stats-label">Всего заявок</div>
+                </div>
+            </div>
+
+            <div class="stats-card">
+                <div class="stats-icon">
+                    <i class="fas fa-inbox"></i>
+                </div>
+                <div class="stats-content">
+                    <div class="stats-value">{{ new_tickets }}</div>
+                    <div class="stats-label">Новых заявок</div>
+                </div>
+            </div>
+
+            <div class="stats-card">
+                <div class="stats-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stats-content">
+                    <div class="stats-value">{{ resolved_tickets }}</div>
+                    <div class="stats-label">Решенных заявок</div>
+                </div>
+            </div>
+
+            <div class="stats-card">
+                <div class="stats-icon">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <div class="stats-content">
+                    <div class="stats-value">{{ assigned_tickets }}</div>
+                    <div class="stats-label">Назначено на вас</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="recent-tickets">
+            <h2>Заявки за последние 12 часов</h2>
+            {% if session.role == 'curator' %}
+            <div class="admin-actions mb-3">
+                <a href="{{ url_for('tickets') }}" class="btn btn-primary">Все заявки</a>
+                <a href="{{ url_for('users') }}" class="btn btn-primary">Пользователи</a>
+                <a href="{{ url_for('categories_page') }}" class="btn btn-primary">Категории</a>
+            </div>
+            {% endif %}
+            {% if recent_tickets %}
+            <div class="tickets-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th></th> <!-- Столбец для кнопки просмотра без заголовка -->
+                            <th>ID</th>
+                            <th>Заголовок</th>
+                            <th>Описание</th>
+                            <th>Статус</th>
+                            <th>Создатель</th>
+                            <th>Дата создания</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ticket in recent_tickets %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="btn btn-sm btn-primary">Просмотр</a>
+                            </td>
+                            <td>#{{ ticket.id }}</td>
+                            <td>
+                                <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="ticket-title">
+                                    {{ ticket.title }}
+                                </a>
+                            </td>
+                            <td class="ticket-description">{{ ticket.description }}</td>
+                            <td>
+                                <span class="badge badge-{% if ticket.status == 'new' %}primary{% elif ticket.status == 'in_progress' %}warning{% elif ticket.status == 'resolved' %}success{% else %}secondary{% endif %}">
+                                    {% if ticket.status == 'new' %}
+                                    Новая
+                                    {% elif ticket.status == 'in_progress' %}
+                                    В работе
+                                    {% elif ticket.status == 'resolved' %}
+                                    Решена
+                                    {% elif ticket.status == 'irrelevant' %}
+                                    Неактуальна
+                                    {% else %}
+                                    Закрыта
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>{{ ticket.creator_name }}</td>
+                            <td>{{ ticket.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <p>Нет заявок за последние 12 часов</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="dashboard-sidebar">
+        <div class="team-chat-card">
+            <div class="chat-header">
+                <h2><i class="fas fa-comments"></i> Чат</h2>
+                <div class="chat-controls">
+                    <div class="chat-search">
+                        <input type="text" class="chat-search-input" id="chat-search-input" placeholder="Поиск в чате...">
+                        <button type="button" class="chat-search-btn" id="chat-search-btn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <div class="chat-search-navigation" id="chat-search-navigation">
+                            <button type="button" class="search-navigation-btn" id="search-prev">
+                                <i class="fas fa-chevron-up"></i>
+                            </button>
+                            <span class="search-count" id="search-count">0/0</span>
+                            <button type="button" class="search-navigation-btn" id="search-next">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="button" class="chat-refresh-btn" id="refresh-chat-btn" title="Обновить чат">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="chat-content-wrapper">
+                {% if pinned_message %}
+                <div class="pinned-message-container">
+                    <div class="pinned-message">
+                        <div class="pinned-header">
+                            <i class="fas fa-thumbtack"></i>
+                            <span class="pinned-label">Закрепленное сообщение</span>
+                            <a href="{{ url_for('unpin_dashboard_message', message_id=pinned_message.id) }}" class="action-unpin" title="Открепить сообщение"><i class="fas fa-times"></i></a>
+                        </div>
+                        <div class="pinned-content">
+                            <div class="message-sender">{{ pinned_message.sender_name }}</div>
+                            <div class="message-content">{{ pinned_message.content|nl2br }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="chat-messages" id="chat-messages">
+                    {% if dashboard_messages|length == 0 %}
+                    <div class="empty-chat-state">
+                        <i class="fas fa-comment-dots"></i>
+                        <p>Нет сообщений. Начните общение!</p>
+                    </div>
+                    {% endif %}
+
+                    {% for message in dashboard_messages %}
+                    <div class="chat-message {% if message.sender_id|int == current_user_id|int %}own-message{% endif %}" id="message-{{ message.id }}">
+                        <div class="message-header">
+                            <span class="message-sender">{{ message.sender_name }}</span>
+                            <span class="message-time">{{ message.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                            <div class="message-actions">
+                                {% if not message.is_pinned and (session.role == 'curator' or session.role == 'admin') %}
+                                <form method="post" action="{{ url_for('pin_dashboard_message', message_id=message.id) }}" class="inline-form">
+                                    <button type="submit" class="btn-icon action-pin" title="Закрепить сообщение">
+                                        <i class="fas fa-thumbtack"></i>
+                                    </button>
+                                </form>
+                                {% elif message.is_pinned and (session.role == 'curator' or session.role == 'admin') %}
+                                <form method="post" action="{{ url_for('unpin_dashboard_message', message_id=message.id) }}" class="inline-form">
+                                    <button type="submit" class="btn-icon action-unpin" title="Открепить сообщение">
+                                        <i class="fas fa-thumbtack text-primary"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% if message.sender_id|int == current_user_id|int or session.role == 'curator' or session.role == 'admin' %}
+                                <form method="post" action="{{ url_for('delete_dashboard_message', message_id=message.id) }}" class="inline-form" onsubmit="return confirm('Вы уверены, что хотите удалить это сообщение?');">
+                                    <button type="submit" class="btn-icon action-delete" title="Удалить сообщение">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="message-content">
+                            {{ message.content|nl2br }}
+
+                            {% if message.attachments %}
+                            {% for attachment in message.attachments %}
+                            {% if attachment.file_type and attachment.file_type.startswith('image/') %}
+                            <div class="message-image">
+                                <a href="{{ url_for('dashboard_attachment', filename=attachment.file_path) }}" target="_blank">
+                                    <img src="{{ url_for('dashboard_attachment', filename=attachment.file_path) }}" alt="{{ attachment.file_name }}" class="img-fluid">
+                                </a>
+                            </div>
+                            {% else %}
+                            <div class="message-attachment">
+                                <a href="{{ url_for('dashboard_attachment', filename=attachment.file_path) }}" target="_blank">
+                                    <i class="fas fa-paperclip"></i> {{ attachment.file_name }}
+                                </a>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="image-modal" id="image-modal">
+                <span class="image-modal-close" id="image-modal-close">&times;</span>
+                <img id="modal-image" src="" alt="Полноразмерное изображение">
+            </div>
+
+            <div class="chat-form-container">
+                <form method="post" action="{{ url_for('send_dashboard_message') }}" class="chat-form" id="dashboard-chat-form" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <textarea name="message" class="form-control mention-input" id="dashboard-message" placeholder="Введите сообщение... Используйте @ для упоминания коллег" required></textarea>
+                        <div class="mention-suggestions" id="mention-suggestions" style="display: none;"></div>
+                    </div>
+                    <div class="chat-form-actions">
+                        <div class="chat-form-file-upload">
+                            <label for="image-upload" class="btn btn-light btn-sm" title="Прикрепить изображение">
+                                <i class="fas fa-image"></i>
+                            </label>
+                            <input type="file" id="image-upload" name="image" accept="image/*" style="display: none;">
+                            <div id="image-preview-container" style="display: none;">
+                                <div class="image-preview-content">
+                                    <img id="image-preview" src="" alt="Предпросмотр">
+                                    <button type="button" id="remove-image" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Отправить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chat-overrides.css') }}">
+<style>
+    .dashboard-container {
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap; /* Add this to make it responsive */
+    }
+
+    .dashboard-main {
+        flex: 1.7;  /* Увеличиваем соотношение для основной части */
+        min-width: 650px; /* Увеличиваем минимальную ширину */
+    }
+
+    .dashboard-sidebar {
+        flex: 1;
+        min-width: 350px; /* Увеличиваем минимальную ширину */
+    }
+
+    .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stats-card {
+        background-color: var(--bg-card);
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        border: 1px solid var(--border-color);
+    }
+
+    .stats-icon {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 0.5rem;
+        background-color: rgba(37, 99, 235, 0.1);
+        color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-right: 1rem;
+    }
+
+    .stats-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        line-height: 1.25;
+    }
+
+    .stats-label {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    .recent-tickets {
+        margin-top: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .admin-actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .admin-actions .btn {
+        font-size: 0.95rem;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 500;
+    }
+
+    /* Улучшенные стили для таблицы */
+    .tickets-table {
+        overflow-x: auto; /* Меняем на auto чтобы добавить горизонтальный скролл при необходимости */
+        -webkit-overflow-scrolling: touch;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        background-color: var(--bg-card);
+        max-height: 600px; /* Увеличиваем высоту таблицы */
+        overflow-y: auto; /* Добавляем вертикальный скролл при необходимости */
+        scrollbar-width: thin; /* Firefox */
+        scrollbar-color: var(--primary-color) rgba(0, 0, 0, 0.1); /* Firefox */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        margin-bottom: 2rem;
+    }
+
+    .tickets-table table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed; /* Фиксированная ширина столбцов */
+        min-width: 800px; /* Минимальная ширина таблицы */
+    }
+
+    .tickets-table th,
+    .tickets-table td {
+        padding: 1rem 1.25rem; /* Увеличиваем внутренние отступы */
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+        word-wrap: break-word; /* Разрешаем перенос длинных слов */
+        overflow-wrap: break-word; /* Современный аналог word-wrap */
+        line-height: 1.5;
+    }
+
+    .tickets-table th {
+        font-weight: 600;
+        background-color: rgba(0, 0, 0, 0.02);
+        position: sticky; /* Закрепляем заголовок при прокрутке */
+        top: 0;
+        z-index: 5;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        box-shadow: 0 1px 0 0 var(--border-color);
+    }
+
+    .tickets-table tr {
+        transition: all 0.2s ease;
+    }
+
+    .tickets-table tr:hover {
+        background-color: rgba(37, 99, 235, 0.05);
+        transform: translateY(-1px);
+    }
+
+    .tickets-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Кнопка просмотра заявки */
+    .tickets-table .btn-primary {
+        background-color: var(--primary-color);
+        border: none;
+        color: white;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 0.75rem;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+        padding: 0.4rem 0.75rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .tickets-table .btn-primary:hover {
+        background-color: var(--primary-hover);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .tickets-table .btn-primary:active {
+        transform: translateY(0);
+    }
+
+    /* Задаем ширину для каждого столбца */
+    .tickets-table th:nth-child(1),
+    .tickets-table td:nth-child(1) {
+        width: 100px; /* Увеличиваем ширину для столбца с кнопкой */
+        text-align: center;
+    }
+
+    .tickets-table th:nth-child(2),
+    .tickets-table td:nth-child(2) {
+        width: 60px; /* Ширина для ID */
+    }
+
+    .tickets-table th:nth-child(3),
+    .tickets-table td:nth-child(3) {
+        width: 20%; /* Заголовок - увеличиваем ширину */
+    }
+
+    .tickets-table th:nth-child(4),
+    .tickets-table td:nth-child(4) {
+        width: 30%; /* Описание - немного уменьшаем ширину */
+    }
+
+    .tickets-table th:nth-child(5),
+    .tickets-table td:nth-child(5) {
+        width: 10%; /* Статус - немного увеличиваем */
+    }
+
+    .tickets-table th:nth-child(6),
+    .tickets-table td:nth-child(6) {
+        width: 15%; /* Создатель */
+    }
+
+    .tickets-table th:nth-child(7),
+    .tickets-table td:nth-child(7) {
+        width: 12%; /* Дата создания */
+    }
+
+    /* Стили для скроллбара (WebKit/Chrome/Safari) */
+    .tickets-table::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    .tickets-table::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 8px;
+    }
+
+    .tickets-table::-webkit-scrollbar-thumb {
+        background-color: var(--primary-color);
+        border-radius: 8px;
+        transition: background-color 0.3s;
+    }
+
+    .tickets-table::-webkit-scrollbar-thumb:hover {
+        background-color: var(--primary-hover);
+    }
+
+    /* Стили для скроллбара в темной теме */
+    body.dark-theme .tickets-table::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    body.dark-theme .tickets-table::-webkit-scrollbar-thumb {
+        background-color: var(--primary-color);
+    }
+
+    body.dark-theme .tickets-table::-webkit-scrollbar-thumb:hover {
+        background-color: var(--primary-hover);
+    }
+
+    /* Стили для бейджей статусов */
+    .badge {
+        display: inline-block;
+        padding: 0.35em 0.65em;
+        font-size: 0.75em;
+        font-weight: 600;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 50rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .badge-primary {
+        background-color: var(--primary-color);
+        color: #fff;
+    }
+
+    .badge-warning {
+        background-color: var(--warning-color);
+        color: #fff;
+    }
+
+    .badge-success {
+        background-color: var(--success-color);
+        color: #fff;
+    }
+
+    .badge-secondary {
+        background-color: var(--text-muted);
+        color: #fff;
+    }
+
+    /* Эффект при наведении на бейдж */
+    .badge:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Стили для темной темы таблицы заявок */
+    body.dark-theme .tickets-table {
+        background-color: var(--bg-card);
+        border-color: var(--border-color);
+    }
+
+    body.dark-theme .tickets-table th,
+    body.dark-theme .tickets-table td {
+        border-color: var(--border-color);
+        color: var(--text-color);
+    }
+
+    body.dark-theme .tickets-table th {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    body.dark-theme .tickets-table tr:hover {
+        background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    body.dark-theme .ticket-title {
+        color: var(--text-color);
+    }
+
+    body.dark-theme .ticket-title:hover {
+        color: var(--primary-color);
+    }
+
+    body.dark-theme .ticket-description {
+        color: var(--text-color);
+    }
+
+    /* Стиль для описания заявки */
+    .ticket-description {
+        font-size: 0.95rem; /* Увеличиваем размер шрифта */
+        line-height: 1.5; /* Увеличиваем высоту строки */
+        max-height: 4.5em; /* Увеличиваем высоту до примерно 3 строк */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 3; /* Увеличиваем количество строк */
+        -webkit-box-orient: vertical;
+    }
+
+    /* Заголовок тикета */
+    .ticket-title {
+        color: var(--text-color);
+        text-decoration: none;
+        font-weight: 600; /* Делаем более жирным */
+        transition: color 0.2s ease;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 1rem; /* Увеличиваем размер шрифта */
+    }
+
+    .ticket-title:hover {
+        color: var(--primary-color);
+        text-decoration: underline;
+    }
+
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .empty-state {
+        padding: 2rem;
+        text-align: center;
+        color: var(--text-muted);
+        border: 1px dashed var(--border-color);
+        border-radius: 0.5rem;
+    }
+
+    /* Современные стили для командного чата */
+    .team-chat-card {
+        background-color: var(--bg-card);
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        height: 700px; /* Увеличиваем высоту чата */
+        width: 100%;
+        color: var(--text-color);
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+
+    .team-chat-card:hover {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .chat-header {
+        padding: 1.25rem;
+        background-color: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-header h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        color: var(--text-color);
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .chat-header h2 i {
+        color: var(--primary-color);
+        margin-right: 0.5rem;
+    }
+
+    .chat-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .chat-search {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .chat-search-input {
+        padding: 0.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        flex: 1;
+    }
+
+    .chat-search-btn {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+    }
+
+    .chat-refresh-btn {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0.25rem;
+        font-size: 0.9rem;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .chat-refresh-btn:hover {
+        color: var(--primary-color);
+        background-color: rgba(37, 99, 235, 0.1);
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        background-color: var(--bg-color);
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-color) var(--bg-color);
+        background-image:
+            radial-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+            radial-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+        background-size: 20px 20px;
+        background-position: 0 0, 10px 10px;
+        height: 500px; /* Увеличиваем высоту чата */
+    }
+
+    .empty-chat-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--text-muted);
+        font-size: 1rem;
+        gap: 1rem;
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .empty-chat-state i {
+        font-size: 3rem;
+        opacity: 0.5;
+    }
+
+    /* Scrollbar styling */
+    .chat-messages::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .chat-messages::-webkit-scrollbar-track {
+        background: var(--bg-color);
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb {
+        background-color: var(--border-color);
+        border-radius: 6px;
+    }
+
+    .chat-message {
+        padding: 1rem;
+        border-radius: 16px;
+        position: relative;
+        max-width: 85%;
+        width: auto;
+        animation: fadeIn 0.3s ease-out;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        border-left: 3px solid transparent;
+        transition: all 0.2s ease;
+    }
+
+    .chat-message:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .own-message {
+        background-color: rgba(37, 99, 235, 0.1);
+        align-self: flex-end;
+        border-top-right-radius: 0.25rem;
+        border-left-color: var(--primary-color);
+    }
+
+    .own-message .message-sender {
+        color: var(--primary-color);
+    }
+
+    .chat-message:not(.own-message) {
+        background-color: var(--bg-secondary);
+        align-self: flex-start;
+        border-top-left-radius: 0.25rem;
+        border-left-color: var(--text-muted);
+    }
+
+    .chat-message:not(.own-message) .message-sender {
+        color: var(--text-color);
+    }
+
+    .message-header {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        margin-bottom: 0.5rem;
+        align-items: center;
+    }
+
+    .message-sender {
+        font-weight: 600;
+    }
+
+    .message-time {
+        color: var(--text-muted);
+        font-size: 0.7rem;
+    }
+
+    .message-content {
+        word-break: break-word;
+        line-height: 1.5;
+        color: var(--text-color);
+        font-size: 0.95rem;
+    }
+
+    .message-image {
+        margin-top: 0.5em;
+        margin-bottom: 0.5em;
+    }
+    .message-image img {
+        max-width: 180px;
+        max-height: 180px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.09);
+        cursor: pointer;
+        display: block;
+    }
+    .message-attachment {
+        margin-top: 0.5em;
+        font-size: 0.92em;
+        color: var(--primary-color);
+    }
+    .message-attachment i {
+        margin-right: 0.3em;
+    }
+
+    .message-actions {
+        display: none;
+        margin-left: 0.5rem;
+    }
+
+    .chat-message:hover .message-actions {
+        display: flex;
+    }
+
+    .action-pin, .action-unpin {
+        color: var(--text-muted);
+        margin-left: 0.5rem;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .action-pin:hover, .action-unpin:hover {
+        color: var(--primary-color);
+    }
+
+    .pinned-message {
+        background-color: rgba(37, 99, 235, 0.05);
+        border-left: 3px solid var(--primary-color);
+        padding: 0.75rem;
+        margin-top: 1rem;
+        border-radius: 0.5rem;
+        position: relative;
+        transition: all 0.3s ease;
+        z-index: 1; /* Добавляем z-index для корректного отображения */
+    }
+
+    .pinned-message:hover {
+        background-color: rgba(37, 99, 235, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .chat-form {
+        padding: 1rem;
+        background-color: var(--bg-secondary);
+        border-top: 1px solid var(--border-color);
+    }
+
+    .chat-form .form-control {
+        background-color: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 24px;
+        color: var(--text-color);
+        padding: 0.9rem 1.2rem;
+        resize: none;
+        overflow-y: hidden; /* Меняем auto на hidden, чтобы убрать прокрутку */
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        box-shadow: none;
+        width: 100%; /* Make it responsive */
+    }
+
+    .chat-form .form-control::placeholder {
+        color: var(--text-muted);
+    }
+
+    .chat-form .form-control:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+        border-color: var(--primary-color);
+    }
+
+    .chat-form-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 0.75rem;
+    }
+
+    .chat-form-actions .btn-primary {
+        background-color: var(--primary-color);
+        border: none;
+        border-radius: 24px;
+        padding: 0.5rem 1.25rem;
+        font-weight: 500;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .chat-form-actions .btn-primary:hover {
+        background-color: var(--primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .chat-form-actions .btn-primary:active {
+        transform: translateY(0);
+    }
+
+    .mention-suggestions {
+        position: absolute;
+        background-color: var(--bg-secondary);
+        border-radius: 0.5rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        width: calc(100% - 2rem);
+        border: 1px solid var(--border-color);
+    }
+
+    .mention-suggestion {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .mention-suggestion:hover {
+        background-color: rgba(37, 99, 235, 0.1);
+    }
+
+    /* Inline form for pin/unpin buttons */
+    .inline-form {
+        display: inline;
+        margin: 0;
+        padding: 0;
+    }
+    .btn-icon {
+        background: none;
+        border: none;
+        padding: 0;
+        margin: 0 0.25em;
+        cursor: pointer;
+        color: var(--text-muted);
+        font-size: 1em;
+        line-height: 1;
+        vertical-align: middle;
+    }
+    .btn-icon:focus {
+        outline: none;
+    }
+
+    @media (max-width: 992px) {
+        .dashboard-container {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Прокрутка чата вниз при загрузке
+        const chatMessages = document.getElementById('chat-messages');
+        if (chatMessages) {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Функция обновления чата
+        const refreshChatBtn = document.getElementById('refresh-chat-btn');
+        if (refreshChatBtn) {
+            refreshChatBtn.addEventListener('click', function() {
+                // Добавляем анимацию вращения для кнопки обновления
+                this.classList.add('fa-spin');
+
+                // Отправляем запрос на обновление чата
+                fetch(window.location.href)
+                    .then(response => response.text())
+                    .then(html => {
+                        // Парсим HTML-ответ
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+
+                        // Находим элементы чата в ответе
+                        const newChatWrapper = doc.querySelector('.chat-content-wrapper');
+                        const currentChatWrapper = document.querySelector('.chat-content-wrapper');
+
+                        if (newChatWrapper && currentChatWrapper) {
+                            // Обновляем весь контент чата, включая сообщения и закрепленные сообщения
+                            currentChatWrapper.innerHTML = newChatWrapper.innerHTML;
+
+                            // Находим новую область сообщений и прокручиваем её вниз
+                            const newMessagesArea = currentChatWrapper.querySelector('.chat-messages');
+                            if (newMessagesArea) {
+                                newMessagesArea.scrollTop = newMessagesArea.scrollHeight;
+                            }
+
+                            // После обновления чата, добавляем обработчики для новых изображений и кнопок удаления
+                            setTimeout(function() {
+                                setupImageViewers();
+                                setupDeleteButtons();
+                            }, 100);
+                        }
+
+                        // Удаляем вращение кнопки обновления через 1 секунду
+                        setTimeout(function() {
+                            refreshChatBtn.classList.remove('fa-spin');
+                        }, 1000);
+                    })
+                    .catch(error => {
+                        console.error('Ошибка при обновлении чата:', error);
+                        // Удаляем вращение кнопки обновления в случае ошибки
+                        refreshChatBtn.classList.remove('fa-spin');
+                    });
+            });
+        }
+
+        // Упоминания пользователей (@ mentions)
+        const messageInput = document.getElementById('dashboard-message');
+        const mentionSuggestions = document.getElementById('mention-suggestions');
+        const staffMembers = [
+            {% for staff_member in staff %}
+            { id: '{{ staff_member.id }}', name: '{{ staff_member.full_name }}' },
+            {% endfor %}
+        ];
+
+        if (messageInput) {
+            // Добавляем обработчик Ctrl+Enter для отправки сообщений
+            const chatForm = document.getElementById('dashboard-chat-form');
+            messageInput.addEventListener('keydown', function(e) {
+                // Проверяем, нажата ли комбинация Ctrl+Enter
+                if (e.ctrlKey && e.key === 'Enter') {
+                    e.preventDefault(); // Предотвращаем перенос строки
+
+                    // Если поле не пустое, отправляем форму
+                    if (this.value.trim()) {
+                        chatForm.submit();
+                    }
+                }
+            });
+
+            // Устанавливаем начальную высоту при загрузке
+            setTimeout(function() {
+                // Установка начальной высоты textaraea без прокрутки
+                messageInput.style.height = 'auto';
+
+                // Ограничиваем максимальную высоту
+                const maxHeight = 80; // Максимальная высота в пикселях
+
+                if (messageInput.scrollHeight > maxHeight) {
+                    messageInput.style.height = maxHeight + 'px';
+                } else {
+                    messageInput.style.height = messageInput.scrollHeight + 'px';
+                }
+            }, 100);
+
+            // Адаптируем высоту текстового поля без добавления прокрутки
+            messageInput.addEventListener('input', function() {
+                // Сохраняем позицию прокрутки чата
+                const chatScrollPosition = chatMessages.scrollTop;
+
+                // Устанавливаем фиксированную высоту, если текст большой
+                const maxHeight = 80; // Максимальная высота в пикселях
+
+                // Временно увеличиваем высоту, чтобы измерить контент
+                this.style.height = 'auto';
+
+                // Если контент превышает максимальную высоту, устанавливаем фиксированное значение
+                if (this.scrollHeight > maxHeight) {
+                    this.style.height = maxHeight + 'px';
+                } else {
+                    this.style.height = this.scrollHeight + 'px';
+                }
+
+                // Восстанавливаем позицию прокрутки чата
+                chatMessages.scrollTop = chatScrollPosition;
+
+                // Обрабатываем упоминания
+                const cursorPos = this.selectionStart;
+                const text = this.value;
+                const beforeCursor = text.slice(0, cursorPos);
+                const atIndex = beforeCursor.lastIndexOf('@');
+
+                if (atIndex !== -1 && (atIndex === 0 || beforeCursor[atIndex - 1] === ' ')) {
+                    const query = beforeCursor.slice(atIndex + 1).toLowerCase();
+
+                    // Получаем подходящие упоминания
+                    const matches = staffMembers.filter(member =>
+                        member.name.toLowerCase().includes(query)
+                    );
+
+                    if (matches.length > 0) {
+                        showMentionSuggestions(matches, query);
+                    } else {
+                        hideMentionSuggestions();
+                    }
+                } else {
+                    hideMentionSuggestions();
+                }
+            });
+        }
+
+        function showMentionSuggestions(matches, query) {
+            // Очищаем предыдущие подсказки
+            mentionSuggestions.innerHTML = '';
+
+            // Добавляем подсказки
+            matches.forEach(member => {
+                const suggestion = document.createElement('div');
+                suggestion.className = 'mention-suggestion';
+                suggestion.textContent = member.name;
+
+                suggestion.addEventListener('click', function() {
+                    const cursorPos = messageInput.selectionStart;
+                    const text = messageInput.value;
+                    const beforeCursor = text.slice(0, cursorPos);
+                    const atIndex = beforeCursor.lastIndexOf('@');
+
+                    const before = text.slice(0, atIndex);
+                    const after = text.slice(cursorPos);
+                    messageInput.value = before + '@' + member.name + ' ' + after;
+
+                    // Устанавливаем курсор после вставленного упоминания
+                    const newCursorPos = atIndex + member.name.length + 2; // +2 for @ and space
+                    messageInput.focus();
+                    messageInput.setSelectionRange(newCursorPos, newCursorPos);
+
+                    hideMentionSuggestions();
+                });
+
+                mentionSuggestions.appendChild(suggestion);
+            });
+
+            // Показываем подсказки
+            mentionSuggestions.style.display = 'block';
+
+            // Позиционируем подсказки под текстовым полем
+            const inputRect = messageInput.getBoundingClientRect();
+            mentionSuggestions.style.width = `${inputRect.width}px`;
+            mentionSuggestions.style.top = `${inputRect.bottom}px`;
+            mentionSuggestions.style.left = `${inputRect.left}px`;
+        }
+
+        function hideMentionSuggestions() {
+            mentionSuggestions.style.display = 'none';
+        }
+
+        // Обработка клика вне области подсказок
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#mention-suggestions') && !e.target.closest('#dashboard-message')) {
+                hideMentionSuggestions();
+            }
+        });
+
+        // Auto scroll when submitting a message
+        var chatForm = document.getElementById('dashboard-chat-form');
+        if (chatForm) {
+            chatForm.addEventListener('submit', function() {
+                setTimeout(function() {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 100);
+            });
+        }
+
+        // Обработка загрузки изображений
+        const imageUpload = document.getElementById('image-upload');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const removeImageBtn = document.getElementById('remove-image');
+
+        if (imageUpload) {
+            imageUpload.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+
+                    reader.onload = function(e) {
+                        imagePreview.src = e.target.result;
+                        imagePreviewContainer.style.display = 'block';
+                    };
+
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+
+            if (removeImageBtn) {
+                removeImageBtn.addEventListener('click', function() {
+                    imageUpload.value = '';
+                    imagePreviewContainer.style.display = 'none';
+                });
+            }
+        }
+
+        // Модальное окно для просмотра изображений в сообщениях
+        const imageModal = document.getElementById('image-modal');
+        const modalImage = document.getElementById('modal-image');
+        const modalClose = document.getElementById('image-modal-close');
+
+        // Находим все изображения в сообщениях и добавляем обработчик клика
+        function setupImageViewers() {
+            const messageImages = document.querySelectorAll('.message-content img, .message-image img');
+            messageImages.forEach(img => {
+                img.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    modalImage.src = this.src;
+                    imageModal.style.display = 'flex';
+                });
+            });
+        }
+
+        // Вызываем функцию при загрузке страницы
+        setupImageViewers();
+
+        // Закрытие модального окна
+        if (modalClose) {
+            modalClose.addEventListener('click', function() {
+                imageModal.style.display = 'none';
+            });
+        }
+
+        // Закрытие модального окна при клике вне изображения
+        window.addEventListener('click', function(event) {
+            if (event.target == imageModal) {
+                imageModal.style.display = 'none';
+            }
+        });
+
+        // Функция для настройки обработчиков удаления сообщений
+        function setupDeleteButtons() {
+            // Удалено, т.к. теперь удаление идет через форму POST, а не через JS/AJAX
+        }
+
+        // Вызываем функцию при загрузке страницы
+        setupDeleteButtons();
+
+        // Реализация поиска по сообщениям
+        const searchInput = document.getElementById('chat-search-input');
+        const searchBtn = document.getElementById('chat-search-btn');
+        const searchNavigation = document.getElementById('chat-search-navigation');
+        const searchPrev = document.getElementById('search-prev');
+        const searchNext = document.getElementById('search-next');
+        const searchCount = document.getElementById('search-count');
+
+        let searchResults = [];
+        let currentResultIndex = -1;
+
+        // Функция для выполнения поиска
+        function performSearch() {
+            // Сбрасываем предыдущие результаты
+            resetSearch();
+
+            const query = searchInput.value.trim().toLowerCase();
+            if (!query) return;
+
+            // Находим все сообщения
+            const messages = document.querySelectorAll('.chat-message');
+
+            messages.forEach(message => {
+                const content = message.querySelector('.message-content').textContent.toLowerCase();
+                const sender = message.querySelector('.message-sender').textContent.toLowerCase();
+
+                if (content.includes(query) || sender.includes(query)) {
+                    searchResults.push(message);
+                }
+            });
+
+            // Обновляем счетчик результатов
+            updateSearchCount();
+
+            // Показываем навигацию, если есть результаты
+            if (searchResults.length > 0) {
+                searchNavigation.style.display = 'flex';
+                navigateToResult(0);
+            } else {
+                searchNavigation.style.display = 'none';
+                alert('Ничего не найдено');
+            }
+        }
+
+        // Функция для сброса поиска
+        function resetSearch() {
+            // Убираем подсветку со всех сообщений
+            const highlightedMessages = document.querySelectorAll('.message-highlighted');
+            highlightedMessages.forEach(message => {
+                message.classList.remove('message-highlighted');
+            });
+
+            searchResults = [];
+            currentResultIndex = -1;
+            searchNavigation.style.display = 'none';
+        }
+
+        // Функция для обновления счетчика результатов
+        function updateSearchCount() {
+            if (searchResults.length === 0) {
+                searchCount.textContent = '0/0';
+            } else {
+                searchCount.textContent = `${currentResultIndex + 1}/${searchResults.length}`;
+            }
+        }
+
+        // Функция для навигации к конкретному результату
+        function navigateToResult(index) {
+            if (searchResults.length === 0) return;
+
+            // Убираем подсветку с предыдущего результата
+            if (currentResultIndex >= 0 && currentResultIndex < searchResults.length) {
+                searchResults[currentResultIndex].classList.remove('message-highlighted');
+            }
+
+            // Устанавливаем новый индекс
+            currentResultIndex = index;
+
+            // Проверяем, чтобы индекс был в пределах массива
+            if (currentResultIndex < 0) {
+                currentResultIndex = searchResults.length - 1;
+            } else if (currentResultIndex >= searchResults.length) {
+                currentResultIndex = 0;
+            }
+
+            // Подсвечиваем текущий результат
+            const currentMessage = searchResults[currentResultIndex];
+            currentMessage.classList.add('message-highlighted');
+
+            // Прокручиваем к текущему результату
+            currentMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Обновляем счетчик
+            updateSearchCount();
+        }
+
+        // Обработчики событий для поиска
+        if (searchBtn) {
+            searchBtn.addEventListener('click', performSearch);
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    performSearch();
+                }
+
+                // Сбрасываем поиск при очистке поля
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    this.value = '';
+                    resetSearch();
+                }
+            });
+        }
+
+        // Обработчики навигации по результатам
+        if (searchPrev) {
+            searchPrev.addEventListener('click', function() {
+                navigateToResult(currentResultIndex - 1);
+            });
+        }
+
+        if (searchNext) {
+            searchNext.addEventListener('click', function() {
+                navigateToResult(currentResultIndex + 1);
+            });
+        }
+    });
+</script>
+{% endblock %}

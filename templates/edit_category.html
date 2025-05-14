@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Редактирование категории{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Редактирование категории заявок</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('edit_category', category_id=category.id) }}">
+                        <div class="form-group mb-3">
+                            <label for="name">Название категории</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ category.name }}" required>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="description">Описание категории</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ category.description }}</textarea>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if category.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="is_active">
+                                Категория активна
+                            </label>
+                            <small class="form-text text-muted d-block">Неактивные категории не будут отображаться при создании новых заявок</small>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                        <a href="{{ url_for('categories') }}" class="btn btn-secondary">Отмена</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

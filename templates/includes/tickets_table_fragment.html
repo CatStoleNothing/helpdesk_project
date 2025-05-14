@@ -1,0 +1,72 @@
+{% if tickets %}
+<div class="table-responsive">
+    <table class="tickets-table table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Тема</th>
+                <th>Создатель</th>
+                <th>Назначено</th>
+                <th>Категория</th>
+                <th>Приоритет</th>
+                <th>Дата создания</th>
+                <th>Статус</th>
+                <th class="no-sort"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ticket in tickets %}
+            <tr>
+                <td>{{ ticket.id }}</td>
+                <td>{{ ticket.title }}</td>
+                <td>{{ ticket.creator_name }}</td>
+                <td>{{ ticket.assignee or '-' }}</td>
+                <td>{{ ticket.category_name or '-' }}</td>
+                <td>
+                    {% if ticket.priority == 'low' %}
+                        <span class="badge bg-success">Низкий</span>
+                    {% elif ticket.priority == 'normal' %}
+                        <span class="badge bg-primary">Средний</span>
+                    {% elif ticket.priority == 'high' %}
+                        <span class="badge bg-danger">Высокий</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Не указан</span>
+                    {% endif %}
+                </td>
+                <td>{{ ticket.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                <td>
+                    <span class="badge badge-{% if ticket.status == 'new' %}primary{% elif ticket.status == 'in_progress' %}warning{% elif ticket.status == 'resolved' %}success{% else %}secondary{% endif %}">
+                        {% if ticket.status == 'new' %}
+                            Новая
+                        {% elif ticket.status == 'in_progress' %}
+                            В работе
+                        {% elif ticket.status == 'resolved' %}
+                            Решена
+                        {% else %}
+                            Закрыта
+                        {% endif %}
+                    </span>
+                </td>
+                <td>
+                    <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="btn btn-view">Просмотр</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="pagination mt-4">
+    {% if has_prev %}
+    <a href="#" data-page="{{ page-1 }}" class="btn btn-secondary btn-sm">Предыдущая</a>
+    {% endif %}
+
+    <span class="pagination-info">Страница {{ page }} из {{ total_pages }}</span>
+
+    {% if has_next %}
+    <a href="#" data-page="{{ page+1 }}" class="btn btn-secondary btn-sm">Следующая</a>
+    {% endif %}
+</div>
+{% else %}
+<p class="text-center">Нет заявок для отображения</p>
+{% endif %}

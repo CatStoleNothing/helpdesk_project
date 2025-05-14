@@ -1,0 +1,286 @@
+{% if session.user_id %}
+<div id="chatWidget" class="chat-widget bottom-right {% if session.get('chat_collapsed', False) %}collapsed{% endif %} {% if session.get('chat_fixed', False) %}fixed{% else %}draggable{% endif %}">
+    <!-- Expanded state header -->
+    <div class="chat-header">
+        <h3 class="chat-title">Чат поддержки</h3>
+        <div class="chat-controls">
+            <button type="button" class="chat-control-btn chat-pin-btn" title="Закрепить/Открепить">
+                <i class="fas fa-thumbtack"></i>
+            </button>
+            <button type="button" class="chat-control-btn chat-position-btn" title="Изменить положение">
+                <i class="fas fa-arrows-alt"></i>
+            </button>
+            <button type="button" class="chat-control-btn" id="chatMinimizeBtn" title="Свернуть">
+                <i class="fas fa-minus"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Chat messages area -->
+    <div class="chat-body" id="chatBody">
+        <div class="chat-message bot">
+            <div class="chat-message-text">Добро пожаловать в чат поддержки! Отправьте сообщение, и мы ответим вам как можно скорее.</div>
+            <div class="chat-message-time">{{ now.strftime('%H:%M') }}</div>
+        </div>
+    </div>
+
+    <!-- Chat input area -->
+    <div class="chat-footer">
+        <div class="chat-input-container">
+            <div class="chat-attachment-preview" id="chatAttachmentPreview"></div>
+            <div class="chat-input-wrapper">
+                <textarea class="chat-input" placeholder="Введите сообщение..." id="chatInput"></textarea>
+                <div class="chat-input-actions">
+                    <button type="button" class="chat-attach-btn" id="chatAttachBtn" title="Прикрепить файл">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                    <input type="file" id="chatFileInput" accept="image/*" style="display: none;">
+                    <button type="button" class="chat-send-btn" id="chatSendBtn">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collapsed state toggle button -->
+    <button type="button" class="chat-toggle">
+        <i class="fas fa-headset chat-mini-logo"></i>
+    </button>
+
+    <!-- Position selector -->
+    <div class="position-selector">
+        <div class="position-grid">
+            <div class="position-option {% if session.chat_position == 'top-left' %}active{% endif %}" data-position="top-left">Верх Лево</div>
+            <div class="position-option {% if session.chat_position == 'top-right' %}active{% endif %}" data-position="top-right">Верх Право</div>
+            <div class="position-option {% if session.chat_position == 'bottom-left' %}active{% endif %}" data-position="bottom-left">Низ Лево</div>
+            <div class="position-option {% if session.chat_position == 'bottom-right' %}active{% endif %}" data-position="bottom-right">Низ Право</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Make the user ID available to chat.js
+    window.userId = "{{ session.user_id }}";
+    window.chatFixed = {{ session.get('chat_fixed', 'false')|lower }};
+
+    // Подготовка функциональности для загрузки изображений в чат
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatAttachBtn = document.getElementById('chatAttachBtn');
+        const chatFileInput = document.getElementById('chatFileInput');
+        const chatInput = document.getElementById('chatInput');
+        const chatAttachmentPreview = document.getElementById('chatAttachmentPreview');
+        const chatSendBtn = document.getElementById('chatSendBtn');
+
+        let attachedFile = null;
+
+        // Обработчик для кнопки прикрепления файла
+        if (chatAttachBtn) {
+            chatAttachBtn.addEventListener('click', function() {
+                chatFileInput.click();
+            });
+        }
+
+        // Обработчик для выбора файла через диалог
+        if (chatFileInput) {
+            chatFileInput.addEventListener('change', function(e) {
+                handleFileSelection(e.target.files);
+            });
+        }
+
+        // Обработчик вставки из буфера обмена
+        if (chatInput) {
+            chatInput.addEventListener('paste', function(e) {
+                const clipboardData = e.clipboardData || window.clipboardData;
+                const items = clipboardData.items;
+
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        e.preventDefault(); // Предотвращаем вставку изображения как текст
+                        const blob = items[i].getAsFile();
+                        const files = [blob];
+                        handleFileSelection(files);
+                        break;
+                    }
+                }
+            });
+        }
+
+        // Функция для обработки выбранных файлов
+        function handleFileSelection(files) {
+            if (!files || !files.length) return;
+
+            const file = files[0];
+            if (!file.type.match('image.*')) {
+                alert('Пожалуйста, выберите изображение');
+                return;
+            }
+
+            attachedFile = file;
+
+            // Показываем превью изображения
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                chatAttachmentPreview.innerHTML = `
+                    <div class="attachment-preview">
+                        <img src="${e.target.result}" alt="Preview">
+                        <button type="button" class="attachment-remove-btn" id="removeAttachmentBtn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+
+                // Добавляем обработчик для удаления превью
+                document.getElementById('removeAttachmentBtn').addEventListener('click', function() {
+                    clearAttachment();
+                });
+
+                chatAttachmentPreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Функция для очистки прикрепленного файла
+        function clearAttachment() {
+            attachedFile = null;
+            chatAttachmentPreview.innerHTML = '';
+            chatAttachmentPreview.style.display = 'none';
+            chatFileInput.value = '';
+        }
+
+        // Обработчик для отправки сообщения
+        if (chatSendBtn) {
+            chatSendBtn.addEventListener('click', function() {
+                sendChatMessage();
+            });
+        }
+
+        // Обработчик Enter для отправки
+        if (chatInput) {
+            chatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendChatMessage();
+                }
+            });
+        }
+
+        // Функция отправки сообщения и файла
+        function sendChatMessage() {
+            const messageText = chatInput.value.trim();
+
+            if (!messageText && !attachedFile) {
+                return; // Если нет ни текста, ни прикрепленного файла, ничего не делаем
+            }
+
+            // Создаем объект FormData для отправки данных на сервер
+            const formData = new FormData();
+            formData.append('message', messageText);
+
+            // Если есть прикрепленный файл, добавляем его
+            if (attachedFile) {
+                formData.append('image', attachedFile);
+            }
+
+            // Определяем ticket_id если находимся на странице заявки
+            const ticketIdMatch = window.location.pathname.match(/\/ticket\/(\d+)/);
+            if (ticketIdMatch && ticketIdMatch[1]) {
+                formData.append('ticket_id', ticketIdMatch[1]);
+
+                // Для заявок также добавляем флаги внутреннего сообщения и закрепления
+                // Если на странице есть соответствующие чекбоксы
+                const internalCheckbox = document.getElementById('internalMessage');
+                if (internalCheckbox && internalCheckbox.checked) {
+                    formData.append('is_internal', 'true');
+                }
+
+                const pinnedCheckbox = document.getElementById('pinnedMessage');
+                if (pinnedCheckbox && pinnedCheckbox.checked) {
+                    formData.append('is_pinned', 'true');
+                }
+            }
+
+            // Показываем индикатор загрузки
+            const sendButton = chatSendBtn;
+            sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            sendButton.disabled = true;
+
+            // Отправляем запрос на сервер
+            fetch('/send_chat_message', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin' // Отправляем куки сессии
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Если сообщение успешно отправлено, добавляем его в чат
+                    addMessageToChat(data.message.content, data.message.attachment);
+                } else {
+                    // Если произошла ошибка, показываем сообщение
+                    console.error('Ошибка при отправке сообщения:', data.error);
+                    alert('Ошибка при отправке сообщения: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка сети при отправке сообщения:', error);
+                alert('Ошибка при отправке сообщения. Проверьте подключение к интернету.');
+            })
+            .finally(() => {
+                // Восстанавливаем кнопку отправки
+                sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
+                sendButton.disabled = false;
+
+                // Очищаем поле ввода и прикрепленный файл
+                chatInput.value = '';
+                clearAttachment();
+            });
+        }
+
+        // Функция для добавления сообщения в чат
+        function addMessageToChat(text, attachment) {
+            const messageContainer = document.createElement('div');
+            messageContainer.className = 'chat-message user';
+
+            let messageContent = '';
+
+            if (text) {
+                messageContent += `<div class="chat-message-text">${text}</div>`;
+            }
+
+            if (attachment) {
+                if (attachment.is_image) {
+                    messageContent += `
+                        <div class="chat-message-image">
+                            <a href="${attachment.file_path}" target="_blank">
+                                <img src="${attachment.file_path}" alt="${attachment.file_name}">
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    messageContent += `
+                        <div class="chat-message-attachment">
+                            <a href="${attachment.file_path}" target="_blank">
+                                <i class="fas fa-paperclip"></i> ${attachment.file_name}
+                            </a>
+                        </div>
+                    `;
+                }
+            }
+
+            messageContent += `<div class="chat-message-time">${getCurrentTime()}</div>`;
+            messageContainer.innerHTML = messageContent;
+
+            const chatBody = document.getElementById('chatBody');
+            chatBody.appendChild(messageContainer);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        // Вспомогательная функция для получения текущего времени
+        function getCurrentTime() {
+            const now = new Date();
+            return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        }
+    });
+</script>
+{% endif %}

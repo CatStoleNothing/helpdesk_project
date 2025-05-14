@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Добавление категории{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Создание новой категории заявок</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('create_category') }}">
+                        <div class="form-group mb-3">
+                            <label for="name">Название категории</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                            <small class="form-text text-muted">Например: МИС, ЛИС, Техническая поддержка и т.д.</small>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="description">Описание категории</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                            <small class="form-text text-muted">Опишите, для каких типов заявок предназначена эта категория</small>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Создать категорию</button>
+                        <a href="{{ url_for('categories_page') }}" class="btn btn-secondary">Отмена</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
