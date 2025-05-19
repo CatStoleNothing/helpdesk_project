@@ -275,6 +275,7 @@ def edit_user(user_id):
         user.department= request.form.get('department',user.department).strip()
         user.office    = request.form.get('office',    user.office).strip()
         user.role      = request.form.get('role',      user.role)
+        user.chat_id   = request.form.get('chat_id',   user.chat_id).strip()
         pwd = request.form.get('password','').strip()
         if pwd:
             user.password_hash = User.get_password_hash(pwd)

@@ -54,6 +54,15 @@
                 <input type="text" class="form-control" id="office" name="office" placeholder="Укажите кабинет" value="{{ user.office }}">
             </div>
 
+            <div class="col-md-12 mb-3">
+                <label for="chat_id" class="form-label">ID в Telegram</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fab fa-telegram"></i></span>
+                    <input type="text" class="form-control" id="chat_id" name="chat_id" placeholder="Введите ID в Telegram" value="{{ user.chat_id }}">
+                </div>
+                <small class="text-muted">Изменение этого параметра может нарушить связь с ботом Telegram</small>
+            </div>
+
             <div class="col-md-12 mb-4">
                 <div class="card">
                     <div class="card-header bg-light">
@@ -63,7 +72,6 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <p><strong>ID пользователя:</strong> {{ user.id }}</p>
-                                <p><strong>ID в Telegram:</strong> {{ user.chat_id }}</p>
                             </div>
                             <div class="col-md-6">
                                 <p><strong>Статус:</strong>

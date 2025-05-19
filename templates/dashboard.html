@@ -7,43 +7,51 @@
 <div class="row">
     <!-- Ticket Statistics -->
     <div class="col-md-3">
-        <div class="dashboard-card">
-            <div class="card-icon">
-                <i class="fas fa-ticket-alt"></i>
+        <a href="{{ url_for('tickets') }}" class="text-decoration-none">
+            <div class="dashboard-card">
+                <div class="card-icon">
+                    <i class="fas fa-ticket-alt"></i>
+                </div>
+                <div class="card-title">Всего заявок</div>
+                <div class="card-value">{{ total_tickets }}</div>
             </div>
-            <div class="card-title">Всего заявок</div>
-            <div class="card-value">{{ total_tickets }}</div>
-        </div>
+        </a>
     </div>
 
     <div class="col-md-3">
-        <div class="dashboard-card new-card">
-            <div class="card-icon">
-                <i class="fas fa-exclamation-circle"></i>
+        <a href="{{ url_for('tickets', status='new') }}" class="text-decoration-none">
+            <div class="dashboard-card new-card">
+                <div class="card-icon">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <div class="card-title">Новые заявки</div>
+                <div class="card-value">{{ new_tickets }}</div>
             </div>
-            <div class="card-title">Новые заявки</div>
-            <div class="card-value">{{ new_tickets }}</div>
-        </div>
+        </a>
     </div>
 
     <div class="col-md-3">
-        <div class="dashboard-card resolved-card">
-            <div class="card-icon">
-                <i class="fas fa-check-circle"></i>
+        <a href="{{ url_for('tickets', status='resolved') }}" class="text-decoration-none">
+            <div class="dashboard-card resolved-card">
+                <div class="card-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="card-title">Решенные заявки</div>
+                <div class="card-value">{{ resolved_tickets }}</div>
             </div>
-            <div class="card-title">Решенные заявки</div>
-            <div class="card-value">{{ resolved_tickets }}</div>
-        </div>
+        </a>
     </div>
 
     <div class="col-md-3">
-        <div class="dashboard-card assigned-card">
-            <div class="card-icon">
-                <i class="fas fa-user-check"></i>
+        <a href="{{ url_for('tickets', assignee_id='me') }}" class="text-decoration-none">
+            <div class="dashboard-card assigned-card">
+                <div class="card-icon">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <div class="card-title">Назначено мне</div>
+                <div class="card-value">{{ assigned_tickets }}</div>
             </div>
-            <div class="card-title">Назначено мне</div>
-            <div class="card-value">{{ assigned_tickets }}</div>
-        </div>
+        </a>
     </div>
 
     <!-- Recent Tickets -->
@@ -70,7 +78,21 @@
                         <span>
                             <i class="fas fa-clock me-1"></i> {{ ticket.created_at.strftime('%d.%m.%Y %H:%M') }}
                         </span>
-                        <span class="badge {{ ticket.status }}">{{ ticket.status }}</span>
+                        <span class="badge {{ ticket.status }}">
+                            {% if ticket.status == 'new' %}
+                                Новая
+                            {% elif ticket.status == 'in_progress' %}
+                                В работе
+                            {% elif ticket.status == 'resolved' %}
+                                Решена
+                            {% elif ticket.status == 'irrelevant' %}
+                                Неактуально
+                            {% elif ticket.status == 'closed' %}
+                                Закрыта
+                            {% else %}
+                                {{ ticket.status }}
+                            {% endif %}
+                        </span>
                     </div>
                 </div>
                 {% endfor %}

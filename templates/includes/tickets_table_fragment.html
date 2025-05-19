@@ -28,12 +28,32 @@
                     <td>{{ ticket.category_name }}</td>
                     <td>
                         <span class="badge priority-{{ ticket.priority }}">
-                            {{ ticket.priority }}
+                            {% if ticket.priority == 'low' %}
+                                Низкий
+                            {% elif ticket.priority == 'normal' %}
+                                Средний
+                            {% elif ticket.priority == 'high' %}
+                                Высокий
+                            {% else %}
+                                {{ ticket.priority }}
+                            {% endif %}
                         </span>
                     </td>
                     <td>
                         <span class="badge status-{{ ticket.status }}">
-                            {{ ticket.status }}
+                            {% if ticket.status == 'new' %}
+                                Новая
+                            {% elif ticket.status == 'in_progress' %}
+                                В работе
+                            {% elif ticket.status == 'resolved' %}
+                                Решена
+                            {% elif ticket.status == 'irrelevant' %}
+                                Неактуально
+                            {% elif ticket.status == 'closed' %}
+                                Закрыта
+                            {% else %}
+                                {{ ticket.status }}
+                            {% endif %}
                         </span>
                     </td>
                     <td>{{ ticket.created_at.strftime('%d.%m.%Y %H:%M') }}</td>

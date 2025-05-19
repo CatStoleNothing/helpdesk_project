@@ -15,7 +15,7 @@
         {% if current_user.is_authenticated %}
         <nav id="sidebar" class="sidebar">
             <div class="sidebar-header">
-                <h3>ОБУЗ КГКБСМП</h3>
+                <h3><a href="{{ url_for('dashboard') }}" class="text-decoration-none text-white">ОБУЗ КГКБСМП</a></h3>
             </div>
 
             <ul class="list-unstyled components">

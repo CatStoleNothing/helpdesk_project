@@ -638,6 +638,50 @@ async def new_ticket(message: types.Message, state: FSMContext):
         user_db.close()
         ticket_db.close()
 
+# Handle category selection callback
+@dp.callback_query(F.data.startswith("category:"))
+async def process_category_selection(callback: CallbackQuery, state: FSMContext):
+    user_db = SessionLocal()
+    ticket_db = SessionLocal()
+
+    try:
+        # Extract category ID from callback data
+        category_id = callback.data.split(":")[1]
+
+        # Get the category name
+        category = ticket_db.query(TicketCategory).filter(TicketCategory.id == category_id).first()
+        if not category:
+            await callback.message.answer("Ошибка: выбранная категория не найдена.")
+            await callback.answer()
+            return
+
+        # Save category selection to state
+        await state.update_data(category_id=category_id, category_name=category.name)
+
+        # Ask for ticket title
+        await callback.message.answer(f"Вы выбрали категорию: <b>{category.name}</b>.\n\nТеперь введите заголовок заявки:", parse_mode="HTML")
+        await state.set_state(TicketStates.waiting_for_title)
+
+        # Check user status
+        status, _, user = await check_user_status(callback.message.chat.id, user_db)
+        if status and user:
+            # Audit log
+            add_audit_log(
+                ticket_db,
+                str(callback.message.chat.id),
+                user.full_name,
+                "select_ticket_category",
+                f"Пользователь выбрал категорию заявки: {category.name}",
+                "ticket_category",
+                category_id
+            )
+
+        await callback.answer()
+        await update_user_activity(callback.message.chat.id, state)
+    finally:
+        user_db.close()
+        ticket_db.close()
+
 # Команда для выбора заявки
 @dp.message(Command("ticket"))
 async def select_ticket(message: types.Message, state: FSMContext):
