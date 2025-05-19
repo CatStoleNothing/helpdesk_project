@@ -1,201 +1,68 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}Пользователи | Система заявок ОБУЗ КГКБСМП{% endblock %}
-
-{% block breadcrumbs %}
-<li class="breadcrumbs-item"><a href="{{ url_for('dashboard') }}">Панель управления</a></li>
-<li class="breadcrumbs-item">Пользователи</li>
-{% endblock %}
+{% block title %}Пользователи | Helpdesk{% endblock %}
+{% block page_title %}Управление пользователями{% endblock %}
 
 {% block content %}
-<div class="d-flex align-center justify-between mb-4">
-    <h1>Пользователи</h1>
-
-    <div class="user-actions">
-        <a href="{{ url_for('create_user') }}" class="btn btn-primary">Создать пользователя</a>
-    </div>
+<div class="d-flex justify-content-between mb-4">
+    <h4><i class="fas fa-users me-2"></i>Список пользователей</h4>
+    <a href="{{ url_for('create_user') }}" class="btn btn-success">
+        <i class="fas fa-user-plus me-1"></i> Добавить пользователя
+    </a>
 </div>
 
-<div class="card">
-    <div class="card-body">
-        {% if users %}
-        <div class="table-responsive"> <!-- Обернули таблицу в responsive контейнер -->
-            <table class="table sortable" id="users_table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Имя пользователя</th>
-                        <th>ФИО</th>
-                        <th>Должность</th>
-                        <th>Отделение</th>
-                        <th>Кабинет</th>
-                        <th>Роль</th>
-                        <th>Дата создания</th>
-                        <th class="no-sort">Действия</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for user in users %}
-                    <tr>
-                        <td>{{ user.id }}</td>
-                        <td>{{ user.username or '-' }}</td>
-                        <td>{{ user.full_name }}</td>
-                        <td>{{ user.position or '-' }}</td>
-                        <td>{{ user.department or '-' }}</td>
-                        <td>{{ user.office or '-' }}</td>
-                        <td>
-                            <span class="badge badge-{% if user.role == 'agent' %}secondary{% elif user.role == 'admin' %}primary{% elif user.role == 'curator' %}success{% endif %}">
-                                {% if user.role == 'agent' %}
-                                    Агент
-                                {% elif user.role == 'admin' %}
-                                    Администратор
-                                {% elif user.role == 'curator' %}
-                                    Куратор
-                                {% endif %}
-                            </span>
-                        </td>
-                        <td>{{ user.created_at.strftime('%d.%m.%Y') }}</td>
-                        <td>
-                            <a href="{{ url_for('edit_user', user_id=user.id) }}" class="btn btn-secondary btn-sm">Редактировать</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <p class="text-center">Нет пользователей для отображения</p>
-        {% endif %}
-    </div>
+<div class="table-container">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>ФИО</th>
+                <th>Логин</th>
+                <th>Должность</th>
+                <th>Отдел</th>
+                <th>Роль</th>
+                <th>Статус</th>
+                <th>Дата регистрации</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if users %}
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.full_name }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.position }}</td>
+                    <td>{{ user.department }}</td>
+                    <td>
+                        <span class="badge bg-{{ 'primary' if user.role == 'curator' else 'info' if user.role == 'admin' else 'secondary' }}">
+                            {{ user.role }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if user.is_active and user.is_confirmed %}
+                            <span class="badge bg-success">Активен</span>
+                        {% elif user.is_active and not user.is_confirmed %}
+                            <span class="badge bg-warning text-dark">Ожидает подтверждения</span>
+                        {% else %}
+                            <span class="badge bg-danger">Заблокирован</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ user.created_at.strftime('%d.%m.%Y') }}</td>
+                    <td>
+                        <a href="{{ url_for('edit_user', user_id=user.id) }}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="9" class="text-center py-4">Пользователи не найдены</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
 </div>
-{% endblock %}
-
-{% block extra_css %}
-<style>
-    /* Page layout */
-    .d-flex.align-center.justify-between {
-        margin-bottom: 1.5rem;
-    }
-
-    h1 {
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: var(--text-color);
-    }
-
-    /* Card styles */
-    .card {
-        border-radius: 1rem;
-        box-shadow: var(--card-shadow);
-        margin-bottom: 2rem;
-        overflow: hidden;
-    }
-
-    .card-body {
-        padding: 1.5rem;
-    }
-
-    /* User actions */
-    .user-actions {
-        display: flex;
-        gap: 1rem;
-    }
-
-    .user-actions .btn {
-        min-width: 180px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-    }
-
-    .user-actions .btn::before {
-        content: '+';
-        font-size: 1.2rem;
-        font-weight: 600;
-    }
-
-    /* Table styles */
-    .table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        margin-bottom: 0;
-    }
-
-    .table th {
-        background-color: var(--bg-secondary);
-        padding: 1rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.05em;
-        color: var(--text-muted);
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        white-space: nowrap;
-    }
-
-    .table td {
-        padding: 1rem;
-        vertical-align: middle;
-    }
-
-    .table tbody tr {
-        border-bottom: 1px solid var(--border-color);
-        transition: background-color 0.2s;
-    }
-
-    .table tbody tr:hover {
-        background-color: rgba(0,0,0,0.02);
-    }
-
-    /* Badge styling */
-    .badge {
-        min-width: 80px;
-        text-align: center;
-        padding: 0.35rem 0.75rem;
-    }
-
-    /* Action buttons */
-    .btn-secondary.btn-sm {
-        background-color: transparent;
-        color: var(--primary-color);
-        border: 1px solid var(--primary-color);
-        transition: all 0.2s;
-        min-width: 110px;
-        text-align: center;
-    }
-
-    .btn-secondary.btn-sm:hover {
-        background-color: var(--primary-color);
-        color: white;
-    }
-
-    body.dark-theme .btn-secondary.btn-sm:hover {
-        background-color: var(--primary-color);
-        color: white;
-    }
-
-    /* Responsive table */
-    .table-responsive {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        margin: 0;
-        border-radius: 0.5rem;
-    }
-
-    /* Empty state */
-    .text-center {
-        padding: 2rem;
-        color: var(--text-muted);
-        font-size: 1.1rem;
-    }
-
-    /* Dark theme adaptations */
-    body.dark-theme .table tbody tr:hover {
-        background-color: rgba(255,255,255,0.05);
-    }
-</style>
 {% endblock %}

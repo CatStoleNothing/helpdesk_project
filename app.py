@@ -499,6 +499,11 @@ def send_dashboard_message():
 def dashboard_attachment(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+@app.route('/ticket_attachment/<path:filename>')
+@login_required_role()
+def ticket_attachment(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 @app.route('/pin_dashboard_message/<int:message_id>', methods=['POST'])
 @login_required_role(role=['curator', 'admin'])
 def pin_dashboard_message(message_id):
@@ -1183,7 +1188,7 @@ def pin_message(ticket_id, message_id, chat_type):
             Message.id == message_id,
             Message.ticket_id == ticket_id
         ).first()
-        
+
         if message:
             message.is_pinned = True
             db.commit()
@@ -1196,7 +1201,7 @@ def pin_message(ticket_id, message_id, chat_type):
         flash(f'Ошибка при закреплении сообщения: {str(e)}', 'error')
     finally:
         db.close()
-    
+
     return redirect(url_for('ticket_detail', ticket_id=ticket_id))
 
 @app.route('/ticket/<int:ticket_id>/message/<int:message_id>/unpin/<chat_type>', methods=['POST'])
@@ -1208,7 +1213,7 @@ def unpin_message(ticket_id, message_id, chat_type):
             Message.id == message_id,
             Message.ticket_id == ticket_id
         ).first()
-        
+
         if message:
             message.is_pinned = False
             db.commit()
@@ -1221,7 +1226,7 @@ def unpin_message(ticket_id, message_id, chat_type):
         flash(f'Ошибка при откреплении сообщения: {str(e)}', 'error')
     finally:
         db.close()
-    
+
     return redirect(url_for('ticket_detail', ticket_id=ticket_id))
 
 if __name__ == '__main__':

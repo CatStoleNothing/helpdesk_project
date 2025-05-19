@@ -1,78 +1,70 @@
 {% extends "base.html" %}
 
-{% block title %}Создать заявку{% endblock %}
+{% block title %}Создать заявку | Helpdesk{% endblock %}
+{% block page_title %}Создание новой заявки{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-8 offset-md-2">
-            <div class="card">
-                <div class="card-header">
-                    <h3>Создать новую заявку</h3>
-                </div>
-                <div class="card-body">
-                    <form method="post" action="{{ url_for('create_ticket') }}">
-                        <div class="form-group mb-3">
-                            <label for="title">Тема заявки</label>
-                            <input type="text" class="form-control" id="title" name="title" required>
-                        </div>
+<div class="form-container">
+    <h4 class="mb-4"><i class="fas fa-plus-circle me-2"></i>Создание новой заявки</h4>
 
-                        <!-- Добавляем выбор категории -->
-                        <div class="form-group mb-3">
-                            <label for="category_id">Категория</label>
-                            <select class="form-control" id="category_id" name="category_id" required>
-                                <option value="">-- Выберите категорию --</option>
-                                {% for category in categories %}
-                                <option value="{{ category.id }}">{{ category.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+    <form action="{{ url_for('create_ticket') }}" method="post" enctype="multipart/form-data">
+        <div class="row">
+            <div class="col-md-12 mb-3">
+                <label for="title" class="form-label">Заголовок*</label>
+                <input type="text" class="form-control" id="title" name="title" placeholder="Введите заголовок заявки" required>
+            </div>
 
-                        <!-- Добавляем выбор приоритета -->
-                        <div class="form-group mb-3">
-                            <label for="priority">Приоритет</label>
-                            <select class="form-control" id="priority" name="priority">
-                                <option value="low">Низкий</option>
-                                <option value="normal" selected>Средний</option>
-                                <option value="high">Высокий</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group mb-3">
-                            <label for="description">Описание проблемы</label>
-                            <textarea class="form-control" id="description" name="description" rows="5" required></textarea>
-                        </div>
-
-                        {% if users %}
-                        <!-- Для админов и кураторов: выбор создателя -->
-                        <div class="form-group mb-3">
-                            <label for="creator_id">Создатель заявки</label>
-                            <select class="form-control" id="creator_id" name="creator_id" required>
-                                <option value="">-- Выберите сотрудника --</option>
-                                {% for user in users %}
-                                <option value="{{ user.chat_id }}">{{ user.full_name }}{% if user.position %} ({{ user.position }}){% endif %}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        {% else %}
-                        <!-- Для обычного пользователя: скрытое поле -->
-                        <input type="hidden" name="creator_id" value="{{ current_user.chat_id }}">
+            <div class="col-md-6 mb-3">
+                <label for="category_id" class="form-label">Категория*</label>
+                <select class="form-select" id="category_id" name="category_id" required>
+                    <option value="">-- Выберите категорию --</option>
+                    {% for category in categories %}
+                        {% if category.is_active %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
                         {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
 
-                        <div class="form-group mb-3">
-                            <label for="status">Статус</label>
-                            <select class="form-control" id="status" name="status">
-                                <option value="new" selected>Новая</option>
-                                <option value="in_progress">В работе</option>
-                            </select>
-                        </div>
+            <div class="col-md-6 mb-3">
+                <label for="priority" class="form-label">Приоритет</label>
+                <select class="form-select" id="priority" name="priority">
+                    <option value="low">Низкий</option>
+                    <option value="normal" selected>Обычный</option>
+                    <option value="high">Высокий</option>
+                </select>
+            </div>
 
-                        <button type="submit" class="btn btn-primary">Создать заявку</button>
-                        <a href="{{ url_for('tickets') }}" class="btn btn-secondary">Отмена</a>
-                    </form>
+            {% if users %}
+            <div class="col-md-12 mb-3">
+                <label for="creator_id" class="form-label">Создать от имени пользователя</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    <select class="form-select" id="creator_id" name="creator_id">
+                        <option value="">-- От своего имени --</option>
+                        {% for user in users %}
+                            <option value="{{ user.chat_id }}">{{ user.full_name }} ({{ user.position }})</option>
+                        {% endfor %}
+                    </select>
                 </div>
+                <div class="form-text">Если выбрано, заявка будет создана от имени указанного пользователя.</div>
+            </div>
+            {% endif %}
+
+            <div class="col-md-12 mb-4">
+                <label for="description" class="form-label">Описание*</label>
+                <textarea class="form-control" id="description" name="description" rows="6" placeholder="Подробно опишите проблему или запрос" required></textarea>
+            </div>
+
+            <div class="col-md-12 text-end">
+                <a href="{{ url_for('tickets') }}" class="btn btn-secondary me-2">
+                    <i class="fas fa-times me-1"></i> Отмена
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i> Создать заявку
+                </button>
             </div>
         </div>
-    </div>
+    </form>
 </div>
 {% endblock %}

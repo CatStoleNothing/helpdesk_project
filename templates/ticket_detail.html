@@ -1,679 +1,484 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}Заявка #{{ ticket.id }} | Система заявок ОБУЗ КГКБСМП{% endblock %}
-
-{% block breadcrumbs %}
-<li class="breadcrumbs-item"><a href="{{ url_for('dashboard') }}">Панель управления</a></li>
-<li class="breadcrumbs-item"><a href="{{ url_for('tickets') }}">Заявки</a></li>
-<li class="breadcrumbs-item">Заявка #{{ ticket.id }}</li>
-{% endblock %}
+{% block title %}Заявка #{{ ticket.id }} | Helpdesk{% endblock %}
+{% block page_title %}Заявка #{{ ticket.id }}{% endblock %}
 
 {% block content %}
-<div class="ticket-full-3col">
-    <div class="ticket-col ticket-info">
-        <h1 class="ticket-title mb-3">Заявка #{{ ticket.id }}</h1>
-        <div class="ticket-meta mb-3">
-            <div><b>Создатель:</b> {{ creator_name }}</div>
-            <div><b>Создано:</b> {{ ticket.created_at.strftime('%d.%m.%Y %H:%M') }}</div>
-            <div><b>Обновлено:</b> {{ ticket.updated_at.strftime('%d.%m.%Y %H:%M') }}</div>
-            <div><b>Категория:</b> {{ category.name if category else 'Не указана' }}</div>
-            <div><b>Приоритет:</b> {% if ticket.priority == 'low' %}<span class="badge bg-success">Низкий</span>{% elif ticket.priority == 'normal' %}<span class="badge bg-primary">Средний</span>{% elif ticket.priority == 'high' %}<span class="badge bg-danger">Высокий</span>{% else %}<span class="badge bg-secondary">Не указан</span>{% endif %}</div>
-            <div><b>Статус:</b> <span class="badge badge-{% if ticket.status == 'new' %}primary{% elif ticket.status == 'in_progress' %}warning{% elif ticket.status == 'resolved' %}success{% else %}secondary{% endif %}">{% if ticket.status == 'new' %}Новая{% elif ticket.status == 'in_progress' %}В работе{% elif ticket.status == 'resolved' %}Решена{% else %}Закрыта{% endif %}</span></div>
-            <div><b>Назначено:</b> {{ assignee.full_name if assignee else 'Не назначено' }}</div>
+<div class="ticket-detail-container">
+    <div class="ticket-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="ticket-title">{{ ticket.title }}</h3>
+            <span class="badge status-{{ ticket.status }} px-3 py-2">{{ ticket.status }}</span>
         </div>
-        <div class="ticket-section mb-4">
-            <h2>Описание</h2>
-            <div class="ticket-description">{{ ticket.description|nl2br }}</div>
+
+        <div class="ticket-meta-info mt-3">
+            <div class="ticket-meta-item">
+                <span class="ticket-meta-label">Создатель:</span>
+                <span>{{ creator_name }}</span>
+            </div>
+            <div class="ticket-meta-item">
+                <span class="ticket-meta-label">Создана:</span>
+                <span>{{ ticket.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+            </div>
+            <div class="ticket-meta-item">
+                <span class="ticket-meta-label">Исполнитель:</span>
+                <span>{{ assignee.full_name if assignee else 'Не назначен' }}</span>
+            </div>
+            <div class="ticket-meta-item">
+                <span class="ticket-meta-label">Категория:</span>
+                <span>{{ category.name if category else 'Без категории' }}</span>
+            </div>
+            <div class="ticket-meta-item">
+                <span class="ticket-meta-label">Приоритет:</span>
+                <span class="badge priority-{{ ticket.priority }}">{{ ticket.priority }}</span>
+            </div>
         </div>
-        {% if ticket.resolution %}
-        <div class="ticket-section mb-4">
-            <h2>Решение</h2>
-            <div class="ticket-resolution">{{ ticket.resolution|nl2br }}</div>
-        </div>
-        {% endif %}
-        {% if ticket.attachments %}
-        <div class="ticket-section mb-4">
-            <h2>Вложения</h2>
-            <ul class="attachments-list">
-                {% for attachment in ticket.attachments %}
-                <li class="attachment-item">
-                    <a href="/{{ attachment.file_path }}" target="_blank" class="attachment-link">
-                        {% if 'image' in attachment.file_type %}
-                        <div class="attachment-preview"><img src="/{{ attachment.file_path }}" alt="{{ attachment.file_name }}"></div>
-                        {% endif %}
-                        <span class="attachment-name">{{ attachment.file_name }}</span>
-                    </a>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% endif %}
     </div>
-    <div class="ticket-col ticket-chat">
-        <div class="ticket-section mb-4">
-            <div class="d-flex align-center justify-between mb-2">
-                <h2>Чат по заявке</h2>
-                <a href="{{ url_for('tickets') }}" class="btn btn-secondary btn-sm">Назад к списку</a>
+
+    <h5>Описание заявки</h5>
+    <div class="ticket-description">
+        {{ ticket.description|nl2br }}
+    </div>
+
+    {% if ticket.status == 'resolved' %}
+    <h5>Решение</h5>
+    <div class="ticket-description">
+        {{ ticket.resolution|nl2br }}
+    </div>
+    {% endif %}
+
+    {% if ticket.attachments %}
+    <h5 class="mt-4">Вложения</h5>
+    <div class="row">
+        {% for attachment in ticket.attachments %}
+            <div class="col-md-3 mb-3">
+                {% if attachment.is_image %}
+                <a href="{{ url_for('ticket_attachment', filename=attachment.file_path) }}" target="_blank">
+                    <img src="{{ url_for('ticket_attachment', filename=attachment.file_path) }}" alt="{{ attachment.file_name }}" class="img-fluid rounded">
+                </a>
+                {% else %}
+                <a href="{{ url_for('ticket_attachment', filename=attachment.file_path) }}" class="btn btn-secondary w-100" download>
+                    <i class="fas fa-download me-2"></i> {{ attachment.file_name }}
+                </a>
+                {% endif %}
             </div>
-            <div class="tabs mb-2">
-                <button class="tab-btn active" data-target="user-chat-tab" type="button">Чат с пользователем</button>
-                <button class="tab-btn" data-target="internal-chat-tab" type="button">Внутренний чат</button>
-            </div>
-            <div id="user-chat-tab" class="tab-content active">
-                <div class="chat-messages mb-2">
-                    {% set external_messages = ticket.messages|selectattr('is_internal', 'equalto', false)|list %}
-                    {% if external_messages %}
-                        {% for message in external_messages %}
-                        <div class="chat-message user-message" id="message-{{ message.id }}">
-                            <div class="message-header">
-                                <span class="message-sender">{{ message.sender_name }}</span>
-                                <span class="message-time">{{ message.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
-                            </div>
-                            <div class="message-content">{{ message.content|nl2br }}</div>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="chat-empty">Нет сообщений в чате с пользователем.</div>
-                    {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <h5>Внешний чат (с пользователем)</h5>
+            <div class="chat-container" data-chat-type="external">
+                <div class="chat-header">
+                    <span><i class="fas fa-comments me-2"></i> Переписка с пользователем</span>
+                    <span class="badge bg-light text-dark">Видно пользователю</span>
                 </div>
-                <form method="post" action="{{ url_for('send_chat_message') }}" class="chat-form">
+
+                <div class="chat-messages">
+                    {% for message in ticket.messages %}
+                        {% if not message.is_internal %}
+                            <div class="message {{ 'message-outgoing' if message.sender_id == current_user.id|string else 'message-incoming' }}">
+                                {% if message.is_pinned %}
+                                <div class="pinned-message-indicator mb-1">
+                                    <i class="fas fa-thumbtack"></i> Закреплено
+                                </div>
+                                {% endif %}
+                                <div class="message-content">{{ message.content|nl2br }}</div>
+
+                                {% for attachment in ticket.attachments %}
+                                    {% if attachment.message_id == message.id %}
+                                        <img src="{{ url_for('ticket_attachment', filename=attachment.file_path) }}" alt="{{ attachment.file_name }}" class="chat-attachment-img">
+                                    {% endif %}
+                                {% endfor %}
+
+                                <div class="message-meta">
+                                    <span>{{ message.sender_name }}</span>
+                                    <span>{{ message.created_at.strftime('%H:%M') }}</span>
+                                </div>
+
+                                {% if not message.is_pinned %}
+                                <form action="{{ url_for('pin_message', ticket_id=ticket.id, message_id=message.id, chat_type='external') }}" method="post" class="mt-2 text-end">
+                                    <button type="submit" class="btn btn-sm btn-outline-warning">
+                                        <i class="fas fa-thumbtack"></i> Закрепить
+                                    </button>
+                                </form>
+                                {% else %}
+                                <form action="{{ url_for('unpin_message', ticket_id=ticket.id, message_id=message.id, chat_type='external') }}" method="post" class="mt-2 text-end">
+                                    <button type="submit" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-thumbtack fa-rotate-90"></i> Открепить
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <form id="external-chat-form" class="chat-input-container" enctype="multipart/form-data">
                     <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
                     <input type="hidden" name="is_internal" value="false">
-                    <textarea name="message" class="form-control" rows="2" placeholder="Введите сообщение..." required></textarea>
-                    <div class="chat-form-actions"><button type="submit" class="btn btn-primary">Отправить сообщение</button></div>
+                    <div class="flex-grow-1">
+                        <input type="text" name="message" id="external-message-input" class="chat-input w-100" placeholder="Введите сообщение...">
+                        <div id="external-image-preview" class="mt-2"></div>
+                    </div>
+                    <div class="d-flex">
+                        <label for="external-image-input" class="btn btn-outline-secondary me-2" title="Прикрепить изображение">
+                            <i class="fas fa-image"></i>
+                        </label>
+                        <input type="file" id="external-image-input" name="image" accept="image/*" style="display: none;">
+                        <button type="submit" class="chat-send-btn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
                 </form>
             </div>
-            <div id="internal-chat-tab" class="tab-content">
-                <div class="chat-messages mb-2">
-                    {% set internal_messages = ticket.messages|selectattr('is_internal', 'equalto', true)|list %}
-                    {% if internal_messages %}
-                        {% for message in internal_messages %}
-                        <div class="chat-message admin-message" id="message-{{ message.id }}">
-                            <div class="message-header">
-                                <span class="message-sender">{{ message.sender_name }}</span>
-                                <span class="message-time">{{ message.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
-                            </div>
-                            <div class="message-content">{{ message.content|nl2br }}</div>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="chat-empty">Нет сообщений во внутреннем чате.</div>
-                    {% endif %}
+        </div>
+
+        <div class="col-md-6">
+            <h5>Внутренний чат (только для команды)</h5>
+            <div class="chat-container" data-chat-type="internal">
+                <div class="chat-header">
+                    <span><i class="fas fa-users me-2"></i> Внутреннее обсуждение</span>
+                    <span class="badge bg-warning text-dark">Только для команды</span>
                 </div>
-                <form method="post" action="{{ url_for('send_chat_message') }}" class="chat-form">
+
+                <div class="chat-messages">
+                    {% for message in ticket.messages %}
+                        {% if message.is_internal %}
+                            <div class="message message-internal {{ 'message-outgoing' if message.sender_id == current_user.id|string else 'message-incoming' }}">
+                                {% if message.is_pinned %}
+                                <div class="pinned-message-indicator mb-1">
+                                    <i class="fas fa-thumbtack"></i> Закреплено
+                                </div>
+                                {% endif %}
+                                <div class="message-content">{{ message.content|nl2br }}</div>
+
+                                {% for attachment in ticket.attachments %}
+                                    {% if attachment.message_id == message.id %}
+                                        <img src="{{ url_for('ticket_attachment', filename=attachment.file_path) }}" alt="{{ attachment.file_name }}" class="chat-attachment-img">
+                                    {% endif %}
+                                {% endfor %}
+
+                                <div class="message-meta">
+                                    <span>{{ message.sender_name }}</span>
+                                    <span>{{ message.created_at.strftime('%H:%M') }}</span>
+                                </div>
+
+                                {% if not message.is_pinned %}
+                                <form action="{{ url_for('pin_message', ticket_id=ticket.id, message_id=message.id, chat_type='internal') }}" method="post" class="mt-2 text-end">
+                                    <button type="submit" class="btn btn-sm btn-outline-warning">
+                                        <i class="fas fa-thumbtack"></i> Закрепить
+                                    </button>
+                                </form>
+                                {% else %}
+                                <form action="{{ url_for('unpin_message', ticket_id=ticket.id, message_id=message.id, chat_type='internal') }}" method="post" class="mt-2 text-end">
+                                    <button type="submit" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-thumbtack fa-rotate-90"></i> Открепить
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <form id="internal-chat-form" class="chat-input-container" enctype="multipart/form-data">
                     <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
                     <input type="hidden" name="is_internal" value="true">
-                    <textarea name="message" class="form-control mention-input" rows="2" placeholder="Введите сообщение... Используйте @ для упоминания коллег" required></textarea>
-                    <div class="chat-form-actions"><button type="submit" class="btn btn-primary">Отправить сообщение</button></div>
+                    <div class="flex-grow-1">
+                        <input type="text" name="message" id="internal-message-input" class="chat-input w-100" placeholder="Введите сообщение...">
+                        <div id="internal-image-preview" class="mt-2"></div>
+                    </div>
+                    <div class="d-flex">
+                        <label for="internal-image-input" class="btn btn-outline-secondary me-2" title="Прикрепить изображение">
+                            <i class="fas fa-image"></i>
+                        </label>
+                        <input type="file" id="internal-image-input" name="image" accept="image/*" style="display: none;">
+                        <button type="submit" class="chat-send-btn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
-    <div class="ticket-col ticket-management">
-        <div class="ticket-section mb-4">
-            <h2>Управление заявкой</h2>
-            <form method="post" action="{{ url_for('assign_ticket', ticket_id=ticket.id) }}" class="d-flex flex-column gap-2 mb-3">
-                <label for="assigned_to" class="form-label">Исполнитель</label>
-                <select id="assigned_to" name="assigned_to" class="form-control select-assignee">
-                    <option value="">-- Не назначено --</option>
-                    {% for staff_member in staff %}
-                    <option value="{{ staff_member.id }}" {% if assignee and assignee.id == staff_member.id %}selected{% endif %}>{{ staff_member.full_name }} ({{ staff_member.role }})</option>
-                    {% endfor %}
-                </select>
-                <button type="submit" class="btn btn-primary">Назначить</button>
-            </form>
-            {% if ticket.status == 'in_progress' %}
-            <button type="button" id="showResolveModalBtn" class="btn btn-success w-100 mb-3">Завершить заявку</button>
-            {% endif %}
 
-            <!-- Модальное окно для завершения заявки -->
-            <div id="resolveModal" class="ticket-modal">
-                <div class="ticket-modal-content">
-                    <div class="ticket-modal-header">
-                        <h3>Завершение заявки #{{ ticket.id }}</h3>
-                        <button type="button" class="ticket-modal-close">&times;</button>
-                    </div>
-                    <div class="ticket-modal-body">
-                        <form method="post" action="{{ url_for('resolve_ticket', ticket_id=ticket.id) }}" id="resolveForm">
-                            <div class="form-group">
-                                <label for="resolution" class="form-label">Решение</label>
-                                <textarea id="resolution" name="resolution" class="form-control" rows="5" placeholder="Опишите решение проблемы..." required></textarea>
-                            </div>
-                            <div class="ticket-modal-footer">
-                                <button type="button" class="btn btn-secondary ticket-modal-cancel">Отмена</button>
-                                <button type="submit" class="btn btn-success">Завершить заявку</button>
-                            </div>
-                        </form>
-                    </div>
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Управление заявкой</h5>
                 </div>
-            </div>
-
-            {% if ticket.status == 'new' or ticket.status == 'in_progress' %}
-            <button type="button" id="showIrrelevantModalBtn" class="btn btn-secondary w-100 mb-3">Считать неактуальным</button>
-            {% endif %}
-
-            {% if ticket.status == 'resolved' or ticket.status == 'irrelevant' %}
-            <button type="button" id="showReopenModalBtn" class="btn btn-warning w-100 mb-3">Вернуть в работу</button>
-            {% endif %}
-
-            <!-- Модальное окно для отметки неактуальной -->
-            <div id="irrelevantModal" class="ticket-modal">
-                <div class="ticket-modal-content">
-                    <div class="ticket-modal-header">
-                        <h3>Закрытие заявки #{{ ticket.id }}</h3>
-                        <button type="button" class="ticket-modal-close">&times;</button>
-                    </div>
-                    <div class="ticket-modal-body">
-                        <form method="post" action="{{ url_for('mark_irrelevant', ticket_id=ticket.id) }}" id="irrelevantForm">
-                            <div class="form-group">
-                                <label for="irrelevant_reason" class="form-label">Причина закрытия</label>
-                                <textarea id="irrelevant_reason" name="reason" class="form-control" rows="4" placeholder="Укажите причину почему заявка неактуальна..." required></textarea>
+                <div class="card-body">
+                    <div class="row">
+                        {% if not ticket.assigned_to %}
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0">Назначить исполнителя</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <form action="{{ url_for('assign_ticket', ticket_id=ticket.id) }}" method="post">
+                                            <div class="mb-3">
+                                                <label for="assigned_to" class="form-label">Выберите исполнителя:</label>
+                                                <select name="assigned_to" id="assigned_to" class="form-select" required>
+                                                    <option value="">-- Выберите --</option>
+                                                    {% for member in staff %}
+                                                        <option value="{{ member.id }}">{{ member.full_name }} ({{ member.role }})</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">Назначить</button>
+                                        </form>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="ticket-modal-footer">
-                                <button type="button" class="btn btn-primary ticket-modal-cancel">Отмена</button>
-                                <button type="submit" class="btn btn-secondary">Считать неактуальным</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
+                        {% endif %}
 
-            <!-- Модальное окно для возврата в работу -->
-            <div id="reopenModal" class="ticket-modal">
-                <div class="ticket-modal-content">
-                    <div class="ticket-modal-header">
-                        <h3>Возврат заявки #{{ ticket.id }} в работу</h3>
-                        <button type="button" class="ticket-modal-close">&times;</button>
-                    </div>
-                    <div class="ticket-modal-body">
-                        <form method="post" action="{{ url_for('reopen_ticket', ticket_id=ticket.id) }}" id="reopenForm">
-                            <div class="form-group">
-                                <label for="reopen_reason" class="form-label">Причина возврата в работу</label>
-                                <textarea id="reopen_reason" name="reason" class="form-control" rows="4" placeholder="Укажите причину возврата заявки в работу..." required></textarea>
+                        {% if ticket.status != 'resolved' and ticket.status != 'irrelevant' %}
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="mb-0">Завершить заявку</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <form action="{{ url_for('resolve_ticket', ticket_id=ticket.id) }}" method="post">
+                                            <div class="mb-3">
+                                                <label for="resolution" class="form-label">Решение заявки:</label>
+                                                <textarea name="resolution" id="resolution" class="form-control" rows="4" required></textarea>
+                                            </div>
+                                            <button type="submit" class="btn btn-success">Завершить</button>
+                                        </form>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="ticket-modal-footer">
-                                <button type="button" class="btn btn-secondary ticket-modal-cancel">Отмена</button>
-                                <button type="submit" class="btn btn-warning">Вернуть в работу</button>
+                        {% endif %}
+
+                        {% if ticket.status != 'irrelevant' and ticket.status != 'resolved' %}
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header bg-secondary text-white">
+                                        <h6 class="mb-0">Отметить как неактуальную</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <form action="{{ url_for('mark_irrelevant', ticket_id=ticket.id) }}" method="post">
+                                            <div class="mb-3">
+                                                <label for="reason" class="form-label">Причина:</label>
+                                                <textarea name="reason" id="reason" class="form-control" rows="4" required></textarea>
+                                            </div>
+                                            <button type="submit" class="btn btn-secondary">Отметить неактуальной</button>
+                                        </form>
+                                    </div>
+                                </div>
                             </div>
-                        </form>
+                        {% endif %}
+
+                        {% if ticket.status == 'resolved' or ticket.status == 'irrelevant' %}
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header bg-warning text-dark">
+                                        <h6 class="mb-0">Возобновить заявку</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <form action="{{ url_for('reopen_ticket', ticket_id=ticket.id) }}" method="post">
+                                            <div class="mb-3">
+                                                <label for="reason" class="form-label">Причина возобновления:</label>
+                                                <textarea name="reason" id="reason" class="form-control" rows="4" required></textarea>
+                                            </div>
+                                            <button type="submit" class="btn btn-warning">Возобновить</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_css %}
-<style>
-.ticket-full-3col {
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    gap: 24px;
-    width: 100%;
-    min-height: 90vh;
-    padding: 0 24px 24px;
-    box-sizing: border-box;
-    background: none;
-}
-.ticket-col {
-    background: var(--bg-card);
-    border-radius: 1rem;
-    box-shadow: var(--card-shadow);
-    border: 1px solid var(--border-color);
-    padding: 1.8rem;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    height: 100%;
-    transition: box-shadow 0.2s;
-}
-.ticket-col:hover {
-    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-}
-.ticket-info {
-    flex: 0 0 300px;
-    min-width: 280px;
-    max-width: 320px;
-}
-.ticket-management {
-    flex: 0 0 260px;
-    min-width: 240px;
-    max-width: 280px;
-}
-.ticket-chat {
-    flex: 1 1 0;
-    min-width: 0;
-}
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Изображение</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" class="img-fluid" src="" alt="Изображение">
+            </div>
+        </div>
+    </div>
+</div>
 
-.ticket-title {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: var(--text-color);
-    margin-bottom: 1.2rem;
-}
-
-.ticket-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    background: var(--bg-secondary);
-    margin-bottom: 1.5rem;
-}
-
-.ticket-meta > div {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.ticket-meta b {
-    min-width: 100px;
-    font-weight: 600;
-}
-
-.ticket-section {
-    margin-bottom: 1.5rem;
-}
-
-.ticket-section h2 {
-    font-size: 1.25rem;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--border-color);
-    color: var(--text-color);
-}
-
-.ticket-description, .ticket-resolution {
-    background: var(--bg-secondary);
-    padding: 1rem;
-    border-radius: 0.5rem;
-    white-space: pre-wrap;
-    overflow-wrap: break-word;
-    margin-bottom: 1rem;
-    line-height: 1.6;
-}
-
-.attachments-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.attachment-item {
-    width: 120px;
-}
-
-.attachment-link {
-    display: flex;
-    flex-direction: column;
-    text-decoration: none;
-    color: var(--text-color);
-}
-
-.attachment-preview {
-    width: 100%;
-    height: 100px;
-    border-radius: 0.5rem;
-    overflow: hidden;
-    margin-bottom: 5px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-secondary);
-}
-
-.attachment-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.attachment-name {
-    font-size: 0.8rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-align: center;
-}
-
-/* Chat section styles */
-.chat-messages {
-    height: 260px;
-    overflow-y: auto;
-    border-radius: 0.5rem;
-    padding: 1rem;
-    background: var(--bg-secondary);
-    margin-bottom: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    border: 1px solid var(--border-color);
-}
-
-.chat-message {
-    padding: 12px 15px;
-    border-radius: 12px;
-    position: relative;
-    max-width: 80%;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-}
-
-.user-message {
-    align-self: flex-start;
-    background: rgba(37, 99, 235, 0.1);
-    border-bottom-left-radius: 4px;
-}
-
-.admin-message {
-    align-self: flex-end;
-    background: rgba(16, 185, 129, 0.1);
-    border-bottom-right-radius: 4px;
-}
-
-body.dark-theme .user-message {
-    background: rgba(37, 99, 235, 0.2);
-}
-
-body.dark-theme .admin-message {
-    background: rgba(16, 185, 129, 0.2);
-}
-
-.message-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 5px;
-    font-size: 0.8rem;
-}
-
-.message-sender {
-    font-weight: 600;
-}
-
-.message-time {
-    color: var(--text-muted);
-}
-
-.message-content {
-    word-break: break-word;
-    white-space: pre-wrap;
-    line-height: 1.5;
-}
-
-.chat-empty {
-    text-align: center;
-    color: var(--text-muted);
-    padding: 2rem;
-}
-
-.chat-form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.chat-form textarea {
-    width: 100%;
-    border-radius: 0.5rem;
-    padding: 12px 15px;
-    resize: vertical;
-    min-height: 60px;
-}
-
-.chat-form-actions {
-    display: flex;
-    justify-content: flex-end;
-}
-
-/* Tabs for chat */
-.tabs {
-    display: flex;
-    border-radius: 0.5rem;
-    overflow: hidden;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    margin-bottom: 1rem;
-    position: relative;
-    z-index: 2;
-}
-
-.tab-btn {
-    flex: 1;
-    padding: 12px 15px;
-    background: transparent;
-    border: none;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-    position: relative;
-    color: var(--text-muted);
-}
-
-.tab-btn:hover {
-    background: rgba(0,0,0,0.03);
-}
-
-.tab-btn.active {
-    color: var(--primary-color);
-    background: var(--bg-card);
-}
-
-.tab-btn.active::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: var(--primary-color);
-}
-
-body.dark-theme .tab-btn:hover {
-    background: rgba(255,255,255,0.05);
-}
-
-.tab-content {
-    display: none;
-}
-
-.tab-content.active {
-    display: block;
-}
-
-/* Modal styles */
-.ticket-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-    justify-content: center;
-    align-items: center;
-    animation: fade-in 0.3s ease;
-}
-
-@keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-.ticket-modal-content {
-    background-color: var(--bg-card);
-    border-radius: 1rem;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    width: 100%;
-    max-width: 500px;
-    max-height: 90vh;
-    overflow-y: auto;
-    animation: slide-up 0.3s ease;
-}
-
-@keyframes slide-up {
-    from { transform: translateY(30px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-
-.ticket-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.ticket-modal-header h3 {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--text-color);
-}
-
-.ticket-modal-close {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    transition: background-color 0.2s;
-}
-
-.ticket-modal-close:hover {
-    background-color: var(--bg-secondary);
-    color: var(--text-color);
-}
-
-.ticket-modal-body {
-    padding: 1.5rem;
-}
-
-.ticket-modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 1.5rem;
-}
-
-.w-100 {
-    width: 100%;
-}
-
-/* Modal responsive styles */
-@media (max-width: 600px) {
-    .ticket-modal-content {
-        width: 95%;
-        max-height: 85vh;
-    }
-}
-
-/* Management section styles */
-.select-assignee {
-    min-width: 120px;
-    max-width: 100%;
-    font-size: 1.05rem;
-    margin-bottom: 0.5rem;
-    background-image: none !important;
-    padding-right: 1rem !important;
-}
-
-@media (max-width: 1200px) {
-    .ticket-full-3col {
-        flex-direction: column;
-        gap: 20px;
-        padding: 0 12px 12px;
-    }
-    .ticket-col {
-        max-width: 100%;
-        min-width: 0;
-    }
-    .ticket-info, .ticket-management {
-        max-width: 100%;
-        min-width: 0;
-    }
-    .ticket-chat {
-        max-width: 100%;
-        min-width: 0;
-    }
-}
-</style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Табы для чата
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const target = this.dataset.target;
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
-            this.classList.add('active');
-            document.getElementById(target).classList.add('active');
-        });
-    });
-
-    // Модальные окна
-    // Функция для всех модалок
-    function setupModal(modalId, triggerBtnId) {
-        const modal = document.getElementById(modalId);
-        const triggerBtn = document.getElementById(triggerBtnId);
-        const closeBtn = modal.querySelector('.ticket-modal-close');
-        const cancelBtns = modal.querySelectorAll('.ticket-modal-cancel');
-
-        // Открытие модального окна
-        if (triggerBtn) {
-            triggerBtn.addEventListener('click', function() {
-                modal.style.display = 'flex';
-                document.body.style.overflow = 'hidden'; // Предотвращаем прокрутку страницы
-            });
-        }
-
-        // Закрытие по кнопке закрытия
-        if (closeBtn) {
-            closeBtn.addEventListener('click', function() {
-                modal.style.display = 'none';
-                document.body.style.overflow = '';
-            });
-        }
-
-        // Закрытие по кнопкам отмены
-        cancelBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                modal.style.display = 'none';
-                document.body.style.overflow = '';
-            });
+    document.addEventListener('DOMContentLoaded', function() {
+        // Scroll chat to bottom for both chats
+        const chatContainers = document.querySelectorAll('.chat-messages');
+        chatContainers.forEach(function(container) {
+            container.scrollTop = container.scrollHeight;
         });
 
-        // Закрытие по клику вне модального окна
-        modal.addEventListener('click', function(event) {
-            if (event.target === modal) {
-                modal.style.display = 'none';
-                document.body.style.overflow = '';
+        // External chat form submission
+        const externalChatForm = document.getElementById('external-chat-form');
+        const externalMessageInput = document.getElementById('external-message-input');
+        const externalImageInput = document.getElementById('external-image-input');
+        const externalImagePreview = document.getElementById('external-image-preview');
+
+        externalChatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(externalChatForm);
+
+            // Clear the input
+            externalMessageInput.value = '';
+            externalImagePreview.innerHTML = '';
+            externalImageInput.value = '';
+
+            fetch('/send_chat_message', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Create message element
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'message message-outgoing';
+
+                    let messageContent = `<div class="message-content">${data.message.content}</div>`;
+
+                    if (data.message.attachment && data.message.attachment.is_image) {
+                        messageContent += `<img src="${data.message.attachment.file_path}" alt="${data.message.attachment.file_name}" class="chat-attachment-img">`;
+                    }
+
+                    messageContent += `<div class="message-meta">
+                                        <span>${data.message.sender_name}</span>
+                                        <span>${data.message.time}</span>
+                                      </div>`;
+
+                    messageDiv.innerHTML = messageContent;
+
+                    // Append message
+                    const chatMessages = document.querySelector('.chat-container[data-chat-type="external"] .chat-messages');
+                    chatMessages.appendChild(messageDiv);
+
+                    // Scroll to bottom
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                } else {
+                    alert('Ошибка: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Произошла ошибка при отправке сообщения.');
+            });
+        });
+
+        // Internal chat form submission
+        const internalChatForm = document.getElementById('internal-chat-form');
+        const internalMessageInput = document.getElementById('internal-message-input');
+        const internalImageInput = document.getElementById('internal-image-input');
+        const internalImagePreview = document.getElementById('internal-image-preview');
+
+        internalChatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(internalChatForm);
+
+            // Clear the input
+            internalMessageInput.value = '';
+            internalImagePreview.innerHTML = '';
+            internalImageInput.value = '';
+
+            fetch('/send_chat_message', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Create message element
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'message message-internal message-outgoing';
+
+                    let messageContent = `<div class="message-content">${data.message.content}</div>`;
+
+                    if (data.message.attachment && data.message.attachment.is_image) {
+                        messageContent += `<img src="${data.message.attachment.file_path}" alt="${data.message.attachment.file_name}" class="chat-attachment-img">`;
+                    }
+
+                    messageContent += `<div class="message-meta">
+                                        <span>${data.message.sender_name}</span>
+                                        <span>${data.message.time}</span>
+                                      </div>`;
+
+                    messageDiv.innerHTML = messageContent;
+
+                    // Append message
+                    const chatMessages = document.querySelector('.chat-container[data-chat-type="internal"] .chat-messages');
+                    chatMessages.appendChild(messageDiv);
+
+                    // Scroll to bottom
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                } else {
+                    alert('Ошибка: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Произошла ошибка при отправке сообщения.');
+            });
+        });
+
+        // Image upload previews
+        externalImageInput.addEventListener('change', function(e) {
+            previewImage(this, externalImagePreview);
+        });
+
+        internalImageInput.addEventListener('change', function(e) {
+            previewImage(this, internalImagePreview);
+        });
+
+        function previewImage(input, previewContainer) {
+            // Clear previous preview
+            previewContainer.innerHTML = '';
+
+            if (input.files.length > 0) {
+                const file = input.files[0];
+
+                if (file.type.match('image.*')) {
+                    const reader = new FileReader();
+
+                    reader.onload = function(event) {
+                        const imgElement = document.createElement('img');
+                        imgElement.src = event.target.result;
+                        imgElement.className = 'img-fluid rounded mt-2';
+                        imgElement.style.maxHeight = '150px';
+
+                        const removeBtn = document.createElement('button');
+                        removeBtn.className = 'btn btn-sm btn-danger mt-2';
+                        removeBtn.innerHTML = '<i class="fas fa-times"></i> Удалить';
+                        removeBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            previewContainer.innerHTML = '';
+                            input.value = '';
+                        });
+
+                        previewContainer.appendChild(imgElement);
+                        previewContainer.appendChild(removeBtn);
+                    };
+
+                    reader.readAsDataURL(file);
+                }
             }
-        });
-    }
-
-    // Настройка всех модальных окон
-    setupModal('resolveModal', 'showResolveModalBtn');
-    setupModal('irrelevantModal', 'showIrrelevantModalBtn');
-    setupModal('reopenModal', 'showReopenModalBtn');
-
-    // AJAX-отправка сообщений в чатах (оставляем как было)
-});
+        }
+    });
 </script>
 {% endblock %}

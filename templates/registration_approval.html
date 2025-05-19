@@ -1,76 +1,227 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+
+{% block title %}Контроль учетных записей | Helpdesk{% endblock %}
+{% block page_title %}Контроль учетных записей{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-  <h3>Заявки на регистрацию</h3>
-  {% if new_users %}
-    <table class="table table-bordered mt-3">
-      <thead><tr><th>ФИО</th><th>Login</th><th>Роль</th><th>Заявка</th><th></th></tr></thead>
-      <tbody>
-        {% for u in new_users %}
-        <tr>
-          <td>{{u.full_name}}</td>
-          <td>{{u.username}}</td>
-          <td>{{u.role}}</td>
-          <td>{% if not u.is_confirmed and u.is_active %}На рассмотрении{% endif %}</td>
-          <td>
-            <form method="post" style="display:inline;">
-              <input type="hidden" name="user_id" value="{{u.id}}"/>
-              <button name="action" value="approve" class="btn btn-success btn-sm" onclick="return confirm('Подтвердить?')">Одобрить</button>
-              <button name="action" value="reject" class="btn btn-danger btn-sm" onclick="return confirm('Отклонить и заблокировать?')">Отклонить</button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p>Нет новых заявок.</p>
-  {% endif %}
+<ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="requests-tab" data-bs-toggle="tab" data-bs-target="#requests" type="button" role="tab" aria-controls="requests" aria-selected="true">
+            <i class="fas fa-user-clock me-1"></i> Ожидающие ({{ new_users|length }})
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved" type="button" role="tab" aria-controls="approved" aria-selected="false">
+            <i class="fas fa-user-check me-1"></i> Подтвержденные ({{ approved_users|length }})
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab" aria-controls="rejected" aria-selected="false">
+            <i class="fas fa-user-times me-1"></i> Отклоненные ({{ rejected_users|length }})
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab" aria-controls="history" aria-selected="false">
+            <i class="fas fa-history me-1"></i> История действий
+        </button>
+    </li>
+</ul>
 
-  <h4 class="mt-4">Отклонённые и заблокированные</h4>
-  {% if rejected_users %}
-    <table class="table table-striped">
-      <thead><tr><th>ФИО</th><th>Login</th><th>Роль</th><th>Статус</th><th></th></tr></thead>
-      <tbody>
-      {% for u in rejected_users %}
-        <tr>
-          <td>{{u.full_name}}</td><td>{{u.username}}</td><td>{{u.role}}</td><td>Заблокирован</td>
-          <td>
-            <form method="post" style="display:inline">
-              <input type="hidden" name="user_id" value="{{u.id}}"/>
-              <button name="action" value="unlock" class="btn btn-info btn-sm" onclick="return confirm('Разблокировать?')">Разблокировать</button>
-              <button name="action" value="reconsider" class="btn btn-warning btn-sm" onclick="return confirm('Вернуть в рассмотрение?')">В рассмотрение</button>
-            </form>
-          </td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  {% else %}<p>Нет заблокированных или отклонённых заявок.</p>{% endif %}
+<div class="tab-content" id="myTabContent">
+    <!-- Ожидающие заявки -->
+    <div class="tab-pane fade show active" id="requests" role="tabpanel" aria-labelledby="requests-tab">
+        {% if new_users %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>ФИО</th>
+                            <th>Должность</th>
+                            <th>Отдел</th>
+                            <th>Дата регистрации</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in new_users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.full_name }}</td>
+                            <td>{{ user.position }}</td>
+                            <td>{{ user.department }}</td>
+                            <td>{{ user.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                            <td>
+                                <form action="{{ url_for('registration_approval') }}" method="post" class="d-inline">
+                                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                                    <input type="hidden" name="action" value="approve">
+                                    <button type="submit" class="btn btn-sm btn-success" title="Одобрить">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </form>
+                                <form action="{{ url_for('registration_approval') }}" method="post" class="d-inline">
+                                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                                    <input type="hidden" name="action" value="reject">
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Отклонить">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> Нет ожидающих заявок на регистрацию.
+            </div>
+        {% endif %}
+    </div>
 
-  <h4 class="mt-4">Подтверждённые пользователи</h4>
-  <table class="table table-sm table-hover">
-    <thead><tr><th>ФИО</th><th>Login</th><th>Роль</th><th>Статус</th></tr></thead>
-    <tbody>
-      {% for u in approved_users %}
-        <tr><td>{{u.full_name}}</td><td>{{u.username}}</td><td>{{u.role}}</td><td>Подтверждён</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+    <!-- Подтвержденные пользователи -->
+    <div class="tab-pane fade" id="approved" role="tabpanel" aria-labelledby="approved-tab">
+        {% if approved_users %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>ФИО</th>
+                            <th>Должность</th>
+                            <th>Отдел</th>
+                            <th>Роль</th>
+                            <th>Дата регистрации</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in approved_users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.full_name }}</td>
+                            <td>{{ user.position }}</td>
+                            <td>{{ user.department }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'primary' if user.role == 'curator' else 'info' if user.role == 'admin' else 'secondary' }}">
+                                    {{ user.role }}
+                                </span>
+                            </td>
+                            <td>{{ user.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                            <td>
+                                <form action="{{ url_for('registration_approval') }}" method="post" class="d-inline">
+                                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                                    <input type="hidden" name="action" value="reconsider">
+                                    <button type="submit" class="btn btn-sm btn-warning" title="Отправить на пересмотр">
+                                        <i class="fas fa-undo"></i>
+                                    </button>
+                                </form>
+                                <form action="{{ url_for('registration_approval') }}" method="post" class="d-inline">
+                                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                                    <input type="hidden" name="action" value="reject">
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Заблокировать">
+                                        <i class="fas fa-ban"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> Нет подтвержденных пользователей.
+            </div>
+        {% endif %}
+    </div>
 
-  <h5 class="mt-5">История действий по заявкам</h5>
-  <table class="table table-bordered">
-    <thead><tr><th>Когда</th><th>Пользователь</th><th>Действие</th><th>Администратор</th></tr></thead>
-    <tbody>
-      {% for a in actions %}
-        <tr>
-          <td>{{a.timestamp.strftime('%d.%m.%Y %H:%M')}}</td>
-          <td>{{a.entity_id}}</td>
-          <td>{{a.description}}</td>
-          <td>{{a.actor_name}}</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+    <!-- Отклоненные пользователи -->
+    <div class="tab-pane fade" id="rejected" role="tabpanel" aria-labelledby="rejected-tab">
+        {% if rejected_users %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>ФИО</th>
+                            <th>Должность</th>
+                            <th>Отдел</th>
+                            <th>Дата регистрации</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in rejected_users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.full_name }}</td>
+                            <td>{{ user.position }}</td>
+                            <td>{{ user.department }}</td>
+                            <td>{{ user.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                            <td>
+                                <form action="{{ url_for('registration_approval') }}" method="post" class="d-inline">
+                                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                                    <input type="hidden" name="action" value="unlock">
+                                    <button type="submit" class="btn btn-sm btn-success" title="Разблокировать">
+                                        <i class="fas fa-unlock"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> Нет отклоненных пользователей.
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- История действий -->
+    <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
+        {% if actions %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Дата и время</th>
+                            <th>Действие</th>
+                            <th>Описание</th>
+                            <th>Администратор</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for action in actions %}
+                        <tr>
+                            <td>{{ action.timestamp.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                            <td>
+                                {% if action.action_type == 'approve_registration' %}
+                                    <span class="badge bg-success">Одобрение</span>
+                                {% elif action.action_type == 'reject_registration' %}
+                                    <span class="badge bg-danger">Отклонение</span>
+                                {% elif action.action_type == 'unlock_user' %}
+                                    <span class="badge bg-info">Разблокировка</span>
+                                {% elif action.action_type == 'reconsider_registration' %}
+                                    <span class="badge bg-warning text-dark">Пересмотр</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ action.action_type }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ action.description }}</td>
+                            <td>{{ action.actor_name }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> Нет записей об действиях с учетными записями.
+            </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

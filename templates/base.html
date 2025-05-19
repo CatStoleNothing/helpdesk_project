@@ -3,284 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Система заявок ОБУЗ КГКБСМП{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Обновляем стили для темной темы и хлебных крошек -->
-    <style>
-        :root {
-            --primary-color: #2563eb;
-            --primary-hover: #1d4ed8;
-            --text-color: #333;
-            --text-muted: #6b7280;
-            --border-color: #e5e7eb;
-            --bg-color: #fff;
-            --bg-secondary: #f9fafb;
-            --bg-card: #fff;
-            --card-border: rgba(0, 0, 0, 0.1);
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --danger-color: #ef4444;
-            --header-bg: #fff;
-            --header-text: #333;
-            --input-bg: #fff;
-            --input-text: #333;
-            --input-border: #e5e7eb;
-            --input-focus-border: #93c5fd;
-            --button-text: #fff;
-
-            /* Form control heights and sizes */
-            --form-control-height: 46px;
-            --form-control-lg-height: 52px;
-            --form-padding: 0.75rem 1rem;
-            --form-text-size: 0.875rem;
-            --form-text-lg-size: 1rem;
-            --form-label-weight: 500;
-            --form-label-color: #111827;
-            --form-border-radius: 0.375rem;
-            --form-group-spacing: 1.25rem;
-        }
-
-        body.dark-theme {
-            --primary-color: #3b82f6;
-            --primary-hover: #60a5fa;
-            --text-color: #f9fafb;
-            --text-muted: #9ca3af;
-            --border-color: #374151;
-            --bg-color: #111827;
-            --bg-secondary: #1f2937;
-            --bg-card: #1f2937;
-            --card-border: rgba(255, 255, 255, 0.1);
-            --success-color: #059669;
-            --warning-color: #d97706;
-            --danger-color: #dc2626;
-            --header-bg: #111827;
-            --header-text: #f9fafb;
-            --input-bg: #374151;
-            --input-text: #f9fafb;
-            --input-border: #4b5563;
-            --input-focus-border: #60a5fa;
-            --button-text: #f9fafb;
-            --form-label-color: #f9fafb;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            font-size: 16px;
-            line-height: 1.5;
-            color: var(--text-color);
-            background-color: var(--bg-color);
-            margin: 0;
-            padding: 0;
-        }
-
-        /* Container */
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 1rem;
-        }
-
-        /* Logo */
-        .logo {
-            font-weight: 700;
-            font-size: 1.25rem;
-            color: var(--primary-color);
-            display: flex;
-            align-items: center;
-            white-space: nowrap;
-            margin-right: 1rem;
-        }
-
-        .logo a {
-            color: var(--primary-color);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .logo i {
-            font-size: 1.5rem;
-            color: var(--primary-color);
-        }
-
-        .logo span {
-            font-weight: 700;
-            letter-spacing: 0.5px;
-        }
-
-        /* Breadcrumbs */
-        .breadcrumbs {
-            display: flex;
-            list-style: none;
-            margin: 0 0 1.5rem 0;
-            padding: 0;
-            width: 100%;
-            background-color: var(--bg-secondary);
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .breadcrumbs-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 100%;
-            padding: 0.75rem 2rem;
-            width: 100%;
-        }
-
-        .breadcrumbs-left {
-            display: flex;
-            align-items: center;
-        }
-
-        .breadcrumbs-list {
-            display: flex;
-            align-items: center;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .breadcrumbs-item {
-            color: var(--text-muted);
-            text-decoration: none;
-        }
-
-        .breadcrumbs-item:not(:last-child)::after {
-            content: '/';
-            margin: 0 0.5rem;
-            color: var(--text-muted);
-        }
-
-        /* Dark mode toggle */
-        .dark-mode-toggle {
-            background: none;
-            border: none;
-            color: var(--text-color);
-            cursor: pointer;
-            font-size: 1.25rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.5rem;
-            margin-right: 1rem;
-            border-radius: 50%;
-            transition: background-color 0.2s;
-        }
-
-        .dark-mode-toggle:hover {
-            background-color: var(--bg-secondary);
-        }
-    </style>
-
+    <title>{% block title %}Helpdesk Administration{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    {% if current_user.is_authenticated %}
-    {% block breadcrumbs_container %}
-    <div class="breadcrumbs">
-        <div class="breadcrumbs-container compact-header">
-            <div class="breadcrumbs-left">
-                <div class="logo">
+    <div class="wrapper">
+        <!-- Sidebar -->
+        {% if current_user.is_authenticated %}
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>ОБУЗ КГКБСМП</h3>
+            </div>
+
+            <ul class="list-unstyled components">
+                <li class="{% if request.path == url_for('dashboard') %}active{% endif %}">
                     <a href="{{ url_for('dashboard') }}">
-                        <i class="fas fa-hospital-user"></i>
-                        <span>ОБУЗ КГКБСМП</span>
+                        <i class="fas fa-tachometer-alt"></i> Раздел статистики
                     </a>
-                </div>
-                <ul class="breadcrumbs-list">
-                    {% block breadcrumbs %}
-                    <li class="breadcrumbs-item">Панель управления</li>
-                    {% endblock %}
-                </ul>
-            </div>
+                </li>
+                <li class="{% if request.path == url_for('tickets') %}active{% endif %}">
+                    <a href="{{ url_for('tickets') }}">
+                        <i class="fas fa-ticket-alt"></i> Заявки
+                    </a>
+                </li>
+                <li class="{% if request.path == url_for('create_ticket') %}active{% endif %}">
+                    <a href="{{ url_for('create_ticket') }}">
+                        <i class="fas fa-plus-circle"></i> Новая заявка
+                    </a>
+                </li>
+                {% if current_user.role == 'curator' %}
+                <li class="{% if request.path == url_for('users') %}active{% endif %}">
+                    <a href="{{ url_for('users') }}">
+                        <i class="fas fa-users"></i> Пользователи
+                    </a>
+                </li>
+                <li class="{% if request.path == url_for('registration_approval') %}active{% endif %}">
+                    <a href="{{ url_for('registration_approval') }}">
+                        <i class="fas fa-user-check"></i> Контроль учетных записей
+                    </a>
+                </li>
+                <li class="{% if 'categories' in request.path %}active{% endif %}">
+                    <a href="{{ url_for('categories_page') }}">
+                        <i class="fas fa-tags"></i> Категории
+                    </a>
+                </li>
+                {% elif current_user.role == 'admin' %}
+                <li class="{% if request.path == url_for('registration_approval') %}active{% endif %}">
+                    <a href="{{ url_for('registration_approval') }}">
+                        <i class="fas fa-user-check"></i> Контроль учетных записей
+                    </a>
+                </li>
+                <li class="{% if 'categories' in request.path %}active{% endif %}">
+                    <a href="{{ url_for('categories_page') }}">
+                        <i class="fas fa-tags"></i> Категории
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
 
-            <div class="breadcrumbs-center">
-                <nav class="nav">
-                    <a href="{{ url_for('dashboard') }}" class="nav-link">Панель управления</a>
-                    <a href="{{ url_for('tickets') }}" class="nav-link">Заявки</a>
-                    {% if current_user.is_authenticated and current_user.role == 'curator' %}
-                        <a href="{{ url_for('users') }}" class="nav-link">Пользователи</a>
-                        <a href="{{ url_for('categories_page') }}" class="nav-link">Категории</a>
-                        <a href="{{ url_for('registration_approval') }}" class="nav-link">Подтверждение регистраций</a>
-                    {% endif %}
-                </nav>
-            </div>
-
-            <div class="breadcrumbs-right">
+            <div class="sidebar-footer">
                 <div class="user-info">
-                    <i class="fas fa-user"></i>
-                    <span class="user-name" title="{{ current_user.full_name }}">{{ current_user.full_name }}</span>
+                    <span class="user-name">{{ current_user.full_name }}</span>
                 </div>
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Выйти
+                </a>
+            </div>
+        </nav>
+        {% endif %}
 
-                <button type="button" class="dark-mode-toggle" id="darkModeToggle" aria-label="Переключить тему">
-                    <i class="fas fa-moon"></i>
-                </button>
+        <!-- Page Content -->
+        <div id="content" class="{% if not current_user.is_authenticated %}full-width{% endif %}">
+            {% if current_user.is_authenticated %}
+            <!-- Top Navbar -->
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <div class="container-fluid">
+                    <button type="button" id="sidebarCollapse" class="btn btn-info">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <span class="page-title">{% block page_title %}{% endblock %}</span>
+                    <div class="ms-auto d-flex align-items-center">
+                        <span class="me-3 d-none d-md-block">{{ current_user.full_name }}</span>
+                    </div>
+                </div>
+            </nav>
+            {% endif %}
 
-                <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm">Выйти</a>
+            <div class="container-fluid p-4">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Main Content -->
+                {% block content %}{% endblock %}
             </div>
         </div>
     </div>
-    {% endblock %}
-    {% endif %}
 
-    <main class="main">
-        <div class="main-container">
-            {% if current_user.is_authenticated %}
-            {% include 'includes/flash_messages.html' %}
-            {% endif %}
-            {% block content %}{% endblock %}
-        </div>
-    </main>
-
-    <script>
-        // Close flash messages when clicked
-        document.addEventListener('DOMContentLoaded', function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                alert.addEventListener('click', function() {
-                    this.style.display = 'none';
-                });
-            });
-
-            // Theme toggle functionality
-            const themeToggle = document.getElementById('darkModeToggle');
-            if (themeToggle) {
-                themeToggle.addEventListener('click', function() {
-                    document.body.classList.toggle('dark-theme');
-
-                    // Save theme preference to localStorage
-                    const isDarkTheme = document.body.classList.contains('dark-theme');
-                    localStorage.setItem('darkTheme', isDarkTheme);
-
-                    // Update icon
-                    updateThemeIcon(isDarkTheme);
-                });
-
-                // Check for saved theme preference
-                const savedTheme = localStorage.getItem('darkTheme');
-                if (savedTheme === 'true') {
-                    document.body.classList.add('dark-theme');
-                    updateThemeIcon(true);
-                }
-
-                // Helper function to update the theme toggle icon
-                function updateThemeIcon(isDark) {
-                    if (isDark) {
-                        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-                    } else {
-                        themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-                    }
-                }
-            }
-        });
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

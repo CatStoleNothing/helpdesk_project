@@ -1,324 +1,96 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}Редактирование пользователя | Система заявок ОБУЗ КГКБСМП{% endblock %}
-
-{% block breadcrumbs %}
-<li class="breadcrumbs-item"><a href="{{ url_for('dashboard') }}">Панель управления</a></li>
-<li class="breadcrumbs-item"><a href="{{ url_for('users') }}">Пользователи</a></li>
-<li class="breadcrumbs-item">Редактирование пользователя</li>
-{% endblock %}
+{% block title %}Редактирование пользователя | Helpdesk{% endblock %}
+{% block page_title %}Редактирование пользователя{% endblock %}
 
 {% block content %}
-<div class="header-container mb-4">
-    <h1 class="page-title">Редактирование пользователя</h1>
+<div class="form-container">
+    <h4 class="mb-4"><i class="fas fa-user-edit me-2"></i>Редактирование пользователя</h4>
 
-    <div class="user-actions">
-        <a href="{{ url_for('users') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Назад к списку
-        </a>
-    </div>
-</div>
+    <form action="{{ url_for('edit_user', user_id=user.id) }}" method="post">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="full_name" class="form-label">ФИО*</label>
+                <input type="text" class="form-control" id="full_name" name="full_name" placeholder="Введите ФИО пользователя" value="{{ user.full_name }}" required>
+            </div>
 
-<div class="card shadow-sm">
-    <div class="card-header bg-primary text-white">
-        <h3 class="card-title mb-0">Данные пользователя</h3>
-    </div>
-    <div class="card-body">
-        <form method="post" action="{{ url_for('edit_user', user_id=user.id) }}">
-            <!-- Основная информация -->
-            <div class="section mb-5">
-                <h4 class="section-title">Основная информация</h4>
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="full_name" class="form-label fw-bold">ФИО *</label>
-                            <input type="text" id="full_name" name="full_name" class="form-control form-control-lg" value="{{ user.full_name }}" required>
-                        </div>
-                    </div>
+            <div class="col-md-6 mb-3">
+                <label for="role" class="form-label">Роль*</label>
+                <select class="form-select" id="role" name="role" required>
+                    <option value="user" {% if user.role == 'user' %}selected{% endif %}>Пользователь</option>
+                    <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Администратор</option>
+                    <option value="curator" {% if user.role == 'curator' %}selected{% endif %}>Куратор</option>
+                </select>
+            </div>
 
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="role" class="form-label fw-bold">Роль *</label>
-                            <select id="role" name="role" class="form-control form-control-lg" required>
-                                <option value="agent" {% if user.role == 'agent' %}selected{% endif %}>Агент</option>
-                                <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Администратор</option>
-                                <option value="curator" {% if user.role == 'curator' %}selected{% endif %}>Куратор</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row g-4 mt-3">
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="position" class="form-label fw-bold">Должность</label>
-                            <input type="text" id="position" name="position" class="form-control form-control-lg" value="{{ user.position or '' }}">
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="department" class="form-label fw-bold">Отделение</label>
-                            <input type="text" id="department" name="department" class="form-control form-control-lg" value="{{ user.department or '' }}">
-                            <small class="form-text text-muted">Можно оставить пустым</small>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="office" class="form-label fw-bold">Кабинет</label>
-                            <input type="text" id="office" name="office" class="form-control form-control-lg" value="{{ user.office or '' }}">
-                            <small class="form-text text-muted">Можно оставить пустым</small>
-                        </div>
-                    </div>
+            <div class="col-md-6 mb-3">
+                <label for="username" class="form-label">Логин для входа*</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    <input type="text" class="form-control" id="username" name="username" placeholder="Введите логин" value="{{ user.username }}">
                 </div>
             </div>
 
-            <!-- Данные для входа -->
-            <div class="section account-section mb-5">
-                <h4 class="section-title">Данные для входа</h4>
-                <p class="mb-4 text-info">
-                    <i class="fas fa-info-circle"></i>
-                    Данные для входа необходимы только для администраторов и кураторов.
-                </p>
+            <div class="col-md-6 mb-3">
+                <label for="password" class="form-label">Пароль (оставьте пустым, чтобы не менять)</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Введите новый пароль">
+                </div>
+            </div>
 
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="username" class="form-label fw-bold">Имя пользователя</label>
-                            <input type="text" id="username" name="username" class="form-control form-control-lg" value="{{ user.username or '' }}">
-                        </div>
+            <div class="col-md-4 mb-3">
+                <label for="position" class="form-label">Должность</label>
+                <input type="text" class="form-control" id="position" name="position" placeholder="Укажите должность" value="{{ user.position }}">
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label for="department" class="form-label">Отдел</label>
+                <input type="text" class="form-control" id="department" name="department" placeholder="Укажите отдел" value="{{ user.department }}">
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label for="office" class="form-label">Кабинет</label>
+                <input type="text" class="form-control" id="office" name="office" placeholder="Укажите кабинет" value="{{ user.office }}">
+            </div>
+
+            <div class="col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Информация о пользователе</h5>
                     </div>
-
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="password" class="form-label fw-bold">Пароль</label>
-                            <div class="input-group input-group-lg">
-                                <input type="password" id="password" name="password" class="form-control form-control-lg" placeholder="Оставьте пустым, чтобы не менять">
-                                <button type="button" class="btn btn-outline-secondary toggle-password" tabindex="-1" title="Показать/скрыть пароль">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>ID пользователя:</strong> {{ user.id }}</p>
+                                <p><strong>ID в Telegram:</strong> {{ user.chat_id }}</p>
                             </div>
-                            <small class="form-text text-muted">Оставьте пустым, чтобы сохранить текущий пароль</small>
+                            <div class="col-md-6">
+                                <p><strong>Статус:</strong>
+                                    {% if user.is_active and user.is_confirmed %}
+                                        <span class="badge bg-success">Активен</span>
+                                    {% elif user.is_active and not user.is_confirmed %}
+                                        <span class="badge bg-warning text-dark">Ожидает подтверждения</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Заблокирован</span>
+                                    {% endif %}
+                                </p>
+                                <p><strong>Дата регистрации:</strong> {{ user.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Идентификаторы -->
-            <div class="section user-info-section mb-5">
-                <h4 class="section-title">Идентификаторы пользователя</h4>
-                <p class="mb-4 text-warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    Внимание! Изменение идентификаторов может привести к потере связи с пользователем в Telegram.
-                </p>
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="user_id" class="form-label fw-bold">ID в системе</label>
-                            <div class="form-control-static form-control-lg">{{ user.id }}</div>
-                            <small class="form-text text-muted">Уникальный идентификатор пользователя в системе</small>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="chat_id" class="form-label fw-bold">Chat ID Telegram</label>
-                            <input type="text" id="chat_id" name="chat_id" class="form-control form-control-lg" value="{{ user.chat_id }}">
-                            <small class="form-text text-muted">ID чата пользователя в Telegram для отправки уведомлений. Можно изменить, если пользователь сменил аккаунт.</small>
-                        </div>
-                    </div>
-
-                    <div class="col-12">
-                        <div class="form-group">
-                            <label class="form-label fw-bold">Дата создания</label>
-                            <div class="form-control-static form-control-lg">{{ user.created_at.strftime('%d.%m.%Y %H:%M') }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-actions mt-5">
-                <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="fas fa-save"></i> Сохранить изменения
-                </button>
-                <a href="{{ url_for('users') }}" class="btn btn-secondary btn-lg ms-2">
-                    <i class="fas fa-times"></i> Отмена
+            <div class="col-md-12 text-end">
+                <a href="{{ url_for('users') }}" class="btn btn-secondary me-2">
+                    <i class="fas fa-arrow-left me-1"></i> Вернуться к списку
                 </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i> Сохранить изменения
+                </button>
             </div>
-        </form>
-    </div>
+        </div>
+    </form>
 </div>
-{% endblock %}
-
-{% block extra_css %}
-<style>
-    .header-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 2rem;
-    }
-
-    .page-title {
-        font-size: 1.75rem;
-        font-weight: 700;
-        margin: 0;
-        color: var(--text-color);
-    }
-
-    .section {
-        margin-bottom: 2.5rem;
-        padding-bottom: 1.5rem;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .section:last-child {
-        border-bottom: none;
-    }
-
-    .section-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        margin-bottom: 1.5rem;
-        color: var(--primary-color);
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid var(--primary-color);
-        display: inline-block;
-    }
-
-    .form-control-static {
-        padding: 0.75rem 1rem;
-        background-color: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: var(--form-border-radius);
-        font-size: 1rem;
-        color: var(--text-color);
-        min-height: var(--form-control-lg-height);
-        display: flex;
-        align-items: center;
-    }
-
-    .form-label {
-        font-size: 1rem;
-        margin-bottom: 0.5rem;
-        color: var(--form-label-color);
-    }
-
-    .form-label.fw-bold {
-        font-weight: 600;
-    }
-
-    .account-section, .user-info-section {
-        padding: 1.5rem;
-        border: 1px solid var(--border-color);
-        border-radius: 0.75rem;
-        background-color: var(--bg-secondary);
-        margin-bottom: 2rem;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-    }
-
-    body.dark-theme .account-section,
-    body.dark-theme .user-info-section {
-        background-color: var(--bg-card);
-        border-color: var(--border-color);
-    }
-
-    .account-section {
-        border-left: 4px solid var(--primary-color);
-    }
-
-    .user-info-section {
-        border-left: 4px solid var(--warning-color);
-    }
-
-    .form-actions {
-        margin-top: 2rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid var(--border-color);
-        display: flex;
-        justify-content: flex-start;
-    }
-
-    .btn {
-        font-weight: 500;
-        padding: 0.75rem 1.25rem;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .row.g-4 {
-        display: flex;
-        flex-wrap: wrap;
-        margin: 0 -0.75rem;
-    }
-
-    .row.g-4 > div {
-        padding: 0 0.75rem;
-        margin-bottom: 1rem;
-    }
-
-    @media (max-width: 768px) {
-        .header-container {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 1rem;
-        }
-
-        .section {
-            padding: 1rem;
-        }
-
-        .row.g-4 {
-            margin: 0 -0.5rem;
-        }
-
-        .row.g-4 > div {
-            padding: 0 0.5rem;
-        }
-    }
-</style>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Show/hide username and password fields based on role
-        const roleSelect = document.getElementById('role');
-        const usernameField = document.getElementById('username');
-
-        function updateFieldsVisibility() {
-            const isAgentRole = roleSelect.value === 'agent';
-
-            if (isAgentRole) {
-                usernameField.removeAttribute('required');
-            } else {
-                usernameField.setAttribute('required', 'required');
-            }
-        }
-
-        roleSelect.addEventListener('change', updateFieldsVisibility);
-        updateFieldsVisibility();
-
-        // Toggle password visibility
-        const toggleButtons = document.querySelectorAll('.toggle-password');
-        toggleButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const input = this.closest('.input-group').querySelector('input');
-                const icon = this.querySelector('i');
-
-                if (input.type === 'password') {
-                    input.type = 'text';
-                    icon.classList.remove('fa-eye');
-                    icon.classList.add('fa-eye-slash');
-                } else {
-                    input.type = 'password';
-                    icon.classList.remove('fa-eye-slash');
-                    icon.classList.add('fa-eye');
-                }
-            });
-        });
-    });
-</script>
 {% endblock %}

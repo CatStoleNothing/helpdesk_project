@@ -1,521 +1,116 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}Заявки | Система заявок ОБУЗ КГКБСМП{% endblock %}
-
-{% block breadcrumbs %}
-<li class="breadcrumbs-item"><a href="{{ url_for('dashboard') }}">Панель управления</a></li>
-<li class="breadcrumbs-item">Заявки</li>
-{% endblock %}
+{% block title %}Заявки | Helpdesk{% endblock %}
+{% block page_title %}Список заявок{% endblock %}
 
 {% block content %}
-<div class="d-flex align-center justify-between mb-4">
-    <h1>Заявки</h1>
-
-    <div class="ticket-actions d-flex gap-2">
-        {% if current_user.is_authenticated and current_user.role in ['admin', 'curator'] %}
-        <a href="{{ url_for('create_ticket') }}" class="btn btn-primary">Создать заявку</a>
-        {% endif %}
-    </div>
-</div>
-
-<div class="card mb-4">
-    <div class="card-body">
-        <div class="filters-header d-flex justify-between align-center">
-            <h3 class="mb-2">Фильтры</h3>
-            <button type="button" id="toggle-filters-btn" class="btn btn-sm btn-secondary">
-                <span id="toggle-text-show">Показать фильтры</span>
-                <span id="toggle-text-hide" style="display: none;">Скрыть фильтры</span>
-            </button>
-        </div>
-
-        <div id="filters-container" style="display: none;">
-            <form action="{{ url_for('tickets') }}" method="get" class="filters-form">
-                <div class="filters-grid">
-                    <div class="filter-group">
-                        <label for="status">Статус</label>
-                        <select name="status" id="status" class="form-control">
-                            <option value="all" {% if filter_params.status == 'all' %}selected{% endif %}>Все</option>
-                            <option value="new" {% if filter_params.status == 'new' %}selected{% endif %}>Новые</option>
-                            <option value="in_progress" {% if filter_params.status == 'in_progress' %}selected{% endif %}>В работе</option>
-                            <option value="resolved" {% if filter_params.status == 'resolved' %}selected{% endif %}>Решенные</option>
-                            <option value="closed" {% if filter_params.status == 'closed' %}selected{% endif %}>Закрытые</option>
-                        </select>
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="title">Тема</label>
-                        <input type="text" name="title" id="title" class="form-control" placeholder="Поиск по теме" value="{{ filter_params.title }}">
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="description">Описание</label>
-                        <input type="text" name="description" id="description" class="form-control" placeholder="Поиск по описанию" value="{{ filter_params.description }}">
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="creator">Создатель</label>
-                        <div class="position-relative">
-                            <input type="text" name="creator" id="creator" class="form-control" placeholder="Поиск по создателю" list="creators-list" value="{% if filter_params.creator|string in all_staff|map(attribute='id')|map('string')|list %}{% for staff in all_staff %}{% if filter_params.creator|string == staff.id|string %}{{ staff.full_name }}{% endif %}{% endfor %}{% else %}{{ filter_params.creator }}{% endif %}">
-                            <datalist id="creators-list">
-                                <option value="">Все создатели</option>
-                                {% for staff in all_staff %}
-                                <option value="{{ staff.full_name }}" data-value="{{ staff.id }}">{{ staff.full_name }}</option>
-                                {% endfor %}
-                            </datalist>
-                            <input type="hidden" name="creator_id" id="creator_id" value="{{ filter_params.creator }}">
-                        </div>
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="assignee">Назначено</label>
-                        <div class="position-relative">
-                            <input type="text" name="assignee" id="assignee" class="form-control" placeholder="Поиск по назначенному" list="assignees-list" value="{% if filter_params.assignee == 'me' %}Назначено мне{% elif filter_params.assignee == 'unassigned' %}Не назначено{% elif filter_params.assignee|string in all_staff|map(attribute='id')|map('string')|list %}{% for staff in all_staff %}{% if filter_params.assignee|string == staff.id|string %}{{ staff.full_name }}{% endif %}{% endfor %}{% endif %}">
-                            <datalist id="assignees-list">
-                                <option value="Все">all</option>
-                                <option value="Назначено мне">me</option>
-                                <option value="Не назначено">unassigned</option>
-                                {% for staff in all_staff %}
-                                    {% if staff.role in ['admin', 'curator'] %}
-                                    <option value="{{ staff.full_name }}" data-value="{{ staff.id }}">{{ staff.full_name }}</option>
-                                    {% endif %}
-                                {% endfor %}
-                            </datalist>
-                            <input type="hidden" name="assignee_id" id="assignee_id" value="{{ filter_params.assignee }}">
-                        </div>
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="date_from">Дата с</label>
-                        <input type="date" name="date_from" id="date_from" class="form-control" value="{{ filter_params.date_from }}">
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="date_to">Дата по</label>
-                        <input type="date" name="date_to" id="date_to" class="form-control" value="{{ filter_params.date_to }}">
-                    </div>
+<div class="filter-box">
+    <form id="ticket-filter-form" method="get" action="{{ url_for('tickets') }}">
+        <div class="row">
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="status">Статус</label>
+                    <select name="status" id="status" class="form-select filter-select">
+                        <option value="all" {% if filter_params.status == 'all' %}selected{% endif %}>Все</option>
+                        <option value="new" {% if filter_params.status == 'new' %}selected{% endif %}>Новые</option>
+                        <option value="in_progress" {% if filter_params.status == 'in_progress' %}selected{% endif %}>В работе</option>
+                        <option value="resolved" {% if filter_params.status == 'resolved' %}selected{% endif %}>Решенные</option>
+                        <option value="irrelevant" {% if filter_params.status == 'irrelevant' %}selected{% endif %}>Неактуальные</option>
+                    </select>
                 </div>
-
-                <div class="filter-actions mt-3">
-                    <button type="submit" class="btn btn-primary">Применить фильтры</button>
-                    <a href="{{ url_for('tickets') }}" class="btn btn-secondary">Сбросить фильтры</a>
-                </div>
-            </form>
-
-            <div class="filter-tags mt-3">
-                {% if filter_params.status != 'all' %}
-                <span class="filter-tag">
-                    Статус:
-                    {% if filter_params.status == 'new' %}Новые
-                    {% elif filter_params.status == 'in_progress' %}В работе
-                    {% elif filter_params.status == 'resolved' %}Решенные
-                    {% elif filter_params.status == 'closed' %}Закрытые
-                    {% endif %}
-                </span>
-                {% endif %}
-
-                {% if filter_params.title %}
-                <span class="filter-tag">Тема: {{ filter_params.title }}</span>
-                {% endif %}
-
-                {% if filter_params.description %}
-                <span class="filter-tag">Описание: {{ filter_params.description }}</span>
-                {% endif %}
-
-                {% if filter_params.creator %}
-                    {% for staff in all_staff %}
-                        {% if filter_params.creator|string == staff.id|string %}
-                        <span class="filter-tag">Создатель: {{ staff.full_name }}</span>
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
-
-                {% if filter_params.assignee != 'all' %}
-                    {% if filter_params.assignee == 'me' %}
-                    <span class="filter-tag">Назначено: Мне</span>
-                    {% elif filter_params.assignee == 'unassigned' %}
-                    <span class="filter-tag">Назначено: Не назначено</span>
-                    {% else %}
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="assignee_id">Исполнитель</label>
+                    <select name="assignee_id" id="assignee_id" class="form-select filter-select">
+                        <option value="all" {% if filter_params.assignee == 'all' %}selected{% endif %}>Все</option>
+                        <option value="me" {% if filter_params.assignee == 'me' %}selected{% endif %}>Мои заявки</option>
+                        <option value="unassigned" {% if filter_params.assignee == 'unassigned' %}selected{% endif %}>Без исполнителя</option>
                         {% for staff in all_staff %}
-                            {% if filter_params.assignee|string == staff.id|string %}
-                            <span class="filter-tag">Назначено: {{ staff.full_name }}</span>
+                            {% if staff.role in ['admin', 'curator'] %}
+                                <option value="{{ staff.id }}" {% if filter_params.assignee|string == staff.id|string %}selected{% endif %}>{{ staff.full_name }}</option>
                             {% endif %}
                         {% endfor %}
-                    {% endif %}
-                {% endif %}
-
-                {% if filter_params.date_from %}
-                <span class="filter-tag">Дата с: {{ filter_params.date_from }}</span>
-                {% endif %}
-
-                {% if filter_params.date_to %}
-                <span class="filter-tag">Дата по: {{ filter_params.date_to }}</span>
-                {% endif %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="date_from">Дата от</label>
+                    <input type="text" name="date_from" id="date_from" class="form-control datepicker" placeholder="ДД.ММ.ГГГГ" value="{{ filter_params.date_from }}">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="date_to">Дата до</label>
+                    <input type="text" name="date_to" id="date_to" class="form-control datepicker" placeholder="ДД.ММ.ГГГГ" value="{{ filter_params.date_to }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="title">Заголовок содержит</label>
+                    <input type="text" name="title" id="title" class="form-control" value="{{ filter_params.title }}">
+                </div>
+            </div>
+            <div class="col-md-1">
+                <div class="form-group d-flex align-items-end h-100">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
+    </form>
 </div>
 
-<div class="card">
-    <div class="card-body">
-        {% if tickets %}
-        <div class="table-responsive">
-            <table class="tickets-table table table-striped">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Тема</th>
-                        <th>Создатель</th>
-                        <th>Назначено</th>
-                        <th>Категория</th>
-                        <th>Приоритет</th>
-                        <th>Дата создания</th>
-                        <th>Статус</th>
-                        <th class="no-sort"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for ticket in tickets %}
-                    <tr>
-                        <td>{{ ticket.id }}</td>
-                        <td>{{ ticket.title }}</td>
-                        <td>{{ ticket.creator_name }}</td>
-                        <td>{{ ticket.assignee or '-' }}</td>
-                        <td>{{ ticket.category_name or '-' }}</td>
-                        <td>
-                            {% if ticket.priority == 'low' %}
-                                <span class="badge bg-success">Низкий</span>
-                            {% elif ticket.priority == 'normal' %}
-                                <span class="badge bg-primary">Средний</span>
-                            {% elif ticket.priority == 'high' %}
-                                <span class="badge bg-danger">Высокий</span>
-                            {% else %}
-                                <span class="badge bg-secondary">Не указан</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ ticket.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
-                        <td>
-                            <span class="badge badge-{% if ticket.status == 'new' %}primary{% elif ticket.status == 'in_progress' %}warning{% elif ticket.status == 'resolved' %}success{% else %}secondary{% endif %}">
-                                {% if ticket.status == 'new' %}
-                                    Новая
-                                {% elif ticket.status == 'in_progress' %}
-                                    В работе
-                                {% elif ticket.status == 'resolved' %}
-                                    Решена
-                                {% else %}
-                                    Закрыта
-                                {% endif %}
-                            </span>
-                        </td>
-                        <td>
-                            <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="btn btn-view">Просмотр</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <div class="pagination mt-4">
-            {% if has_prev %}
-            <a href="{{ url_for('tickets', status=filter_params.status, title=filter_params.title, description=filter_params.description, creator_id=filter_params.creator, assignee_id=filter_params.assignee, date_from=filter_params.date_from, date_to=filter_params.date_to, page=page-1) }}" class="btn btn-secondary btn-sm">Предыдущая</a>
-            {% endif %}
-
-            <span class="pagination-info">Страница {{ page }} из {{ total_pages }}</span>
-
-            {% if has_next %}
-            <a href="{{ url_for('tickets', status=filter_params.status, title=filter_params.title, description=filter_params.description, creator_id=filter_params.creator, assignee_id=filter_params.assignee, date_from=filter_params.date_from, date_to=filter_params.date_to, page=page+1) }}" class="btn btn-secondary btn-sm">Следующая</a>
-            {% endif %}
-        </div>
-        {% else %}
-        <p class="text-center">Нет заявок для отображения</p>
-        {% endif %}
-    </div>
+<div class="d-flex justify-content-between mb-3">
+    <h5><i class="fas fa-ticket-alt me-2"></i> Найдено заявок: {{ tickets|length }}</h5>
+    <a href="{{ url_for('create_ticket') }}" class="btn btn-success">
+        <i class="fas fa-plus-circle me-1"></i> Создать заявку
+    </a>
 </div>
-{% endblock %}
 
-{% block extra_css %}
-<style>
-    /* Card styles */
-    .card {
-        margin-bottom: 2rem;
-    }
+<div id="tickets-table-container">
+    {% include 'includes/tickets_table_fragment.html' %}
+</div>
 
-    .card-header {
-        background-color: var(--bg-card);
-        padding: 1.2rem 1.5rem;
-    }
-
-    /* Filter controls */
-    .filters-header {
-        margin-bottom: 1rem;
-    }
-
-    .filters-form {
-        margin-top: 1.5rem;
-        padding: 1rem;
-        background-color: var(--bg-secondary);
-        border-radius: 0.75rem;
-    }
-
-    .filters-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 1.25rem;
-    }
-
-    .filter-group {
-        margin-bottom: 1rem;
-    }
-
-    .filter-group label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 600;
-        font-size: 0.9rem;
-        color: var(--text-color);
-    }
-
-    .filter-actions {
-        display: flex;
-        gap: 1rem;
-        margin-top: 1.5rem;
-    }
-
-    .filter-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-        margin-top: 1.5rem;
-        padding: 1rem;
-        background-color: var(--bg-secondary);
-        border-radius: 0.75rem;
-    }
-
-    .filter-tag {
-        background-color: rgba(37, 99, 235, 0.1);
-        color: var(--text-color);
-        padding: 0.5rem 1rem;
-        border-radius: 2rem;
-        font-size: 0.85rem;
-        font-weight: 500;
-        display: inline-flex;
-        align-items: center;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        border: 1px solid rgba(37, 99, 235, 0.15);
-    }
-
-    body.dark-theme .filter-tag {
-        background-color: rgba(59, 130, 246, 0.15);
-        border: 1px solid rgba(59, 130, 246, 0.2);
-    }
-
-    /* Table styles */
-    .tickets-table {
-        border-radius: 0.5rem;
-        overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-
-    .tickets-table th {
-        background-color: var(--bg-secondary);
-        padding: 1rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.05em;
-        color: var(--text-muted);
-        white-space: nowrap;
-    }
-
-    .tickets-table td {
-        padding: 1rem;
-        vertical-align: middle;
-    }
-
-    .tickets-table tbody tr {
-        border-bottom: 1px solid var(--border-color);
-        transition: background-color 0.2s;
-    }
-
-    .tickets-table tbody tr:hover {
-        background-color: rgba(0,0,0,0.02);
-    }
-
-    body.dark-theme .tickets-table tbody tr:hover {
-        background-color: rgba(255,255,255,0.05);
-    }
-
-    /* Pagination */
-    .pagination {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 1rem;
-        margin-top: 2rem;
-    }
-
-    .pagination-info {
-        font-size: 0.95rem;
-        color: var(--text-muted);
-        background: var(--bg-secondary);
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
-        font-weight: 500;
-    }
-
-    /* Button styles */
-    .btn-view {
-        min-width: 110px;
-        text-align: center;
-    }
-
-    /* Position utilities */
-    .position-relative {
-        position: relative;
-    }
-
-    /* Custom datalist styling */
-    input[list]::-webkit-calendar-picker-indicator {
-        display: none;
-    }
-
-    .filter-group input[list] {
-        width: 100%;
-        padding-right: 2rem;
-        position: relative;
-    }
-
-    .filter-group .custom-select-icon {
-        position: absolute;
-        right: 0.75rem;
-        top: 50%;
-        transform: translateY(-50%);
-        pointer-events: none;
-        color: var(--text-muted);
-    }
-
-    /* Responsive table */
-    .table-responsive {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        margin: 0;
-        border-radius: 0.5rem;
-    }
-</style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Обработка переключения отображения фильтров
-        const toggleBtn = document.getElementById('toggle-filters-btn');
-        const filtersContainer = document.getElementById('filters-container');
-        const toggleTextShow = document.getElementById('toggle-text-show');
-        const toggleTextHide = document.getElementById('toggle-text-hide');
-
-        // Проверяем, применены ли какие-либо фильтры
-        const hasActiveFilters = {% if filter_params.status != 'all' or filter_params.title or filter_params.description or filter_params.creator or filter_params.assignee != 'all' or filter_params.date_from or filter_params.date_to %}true{% else %}false{% endif %};
-
-        // Если есть активные фильтры, показываем фильтры сразу
-        if (hasActiveFilters) {
-            filtersContainer.style.display = 'block';
-            toggleTextShow.style.display = 'none';
-            toggleTextHide.style.display = 'inline';
-        }
-
-        toggleBtn.addEventListener('click', function() {
-            if (filtersContainer.style.display === 'none') {
-                filtersContainer.style.display = 'block';
-                toggleTextShow.style.display = 'none';
-                toggleTextHide.style.display = 'inline';
-            } else {
-                filtersContainer.style.display = 'none';
-                toggleTextShow.style.display = 'inline';
-                toggleTextHide.style.display = 'none';
-            }
+        // Date picker initialization
+        const dateInputs = document.querySelectorAll('.datepicker');
+        dateInputs.forEach(function(input) {
+            input.addEventListener('change', function() {
+                if (this.value) {
+                    // Convert DD.MM.YYYY to YYYY-MM-DD for the server
+                    const parts = this.value.split('.');
+                    if (parts.length === 3) {
+                        this.value = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    }
+                }
+            });
         });
 
-        // Handle creator datalist selection
-        const creatorInput = document.getElementById('creator');
-        const creatorIdInput = document.getElementById('creator_id');
-        const creatorDatalist = document.getElementById('creators-list');
+        // Pagination event handlers
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('page-link')) {
+                e.preventDefault();
 
-        if (creatorInput && creatorDatalist) {
-            creatorInput.addEventListener('change', function() {
-                const value = this.value;
+                const page = e.target.getAttribute('data-page');
+                if (page) {
+                    const form = document.getElementById('ticket-filter-form');
+                    const pageInput = document.createElement('input');
+                    pageInput.type = 'hidden';
+                    pageInput.name = 'page';
+                    pageInput.value = page;
 
-                // Reset creator_id if empty
-                if (!value) {
-                    creatorIdInput.value = '';
-                    return;
+                    form.appendChild(pageInput);
+                    form.submit();
                 }
-
-                // Handle special cases
-                if (value === 'Все создатели') {
-                    creatorIdInput.value = '';
-                    return;
-                }
-
-                // Find the matching option
-                const options = creatorDatalist.querySelectorAll('option');
-                for (const option of options) {
-                    if (option.value === value) {
-                        const dataValue = option.getAttribute('data-value');
-                        if (dataValue) {
-                            creatorIdInput.value = dataValue;
-                            return;
-                        }
-                    }
-                }
-
-                // If no match found, keep the text as is (for free text search)
-                creatorIdInput.value = value;
-            });
-        }
-
-        // Handle assignee datalist selection
-        const assigneeInput = document.getElementById('assignee');
-        const assigneeIdInput = document.getElementById('assignee_id');
-        const assigneeDatalist = document.getElementById('assignees-list');
-
-        if (assigneeInput && assigneeDatalist) {
-            assigneeInput.addEventListener('change', function() {
-                const value = this.value;
-
-                // Reset assignee_id if empty
-                if (!value) {
-                    assigneeIdInput.value = 'all';
-                    return;
-                }
-
-                // Handle special cases
-                if (value === 'Все') {
-                    assigneeIdInput.value = 'all';
-                    return;
-                } else if (value === 'Назначено мне') {
-                    assigneeIdInput.value = 'me';
-                    return;
-                } else if (value === 'Не назначено') {
-                    assigneeIdInput.value = 'unassigned';
-                    return;
-                }
-
-                // Find the matching option
-                const options = assigneeDatalist.querySelectorAll('option');
-                for (const option of options) {
-                    if (option.value === value) {
-                        const dataValue = option.getAttribute('data-value');
-                        if (dataValue) {
-                            assigneeIdInput.value = dataValue;
-                            return;
-                        }
-                    }
-                }
-
-                // If no match found, keep the text as is
-                assigneeIdInput.value = value;
-            });
-        }
+            }
+        });
     });
 </script>
 {% endblock %}

@@ -1,72 +1,81 @@
-{% if tickets %}
-<div class="table-responsive">
-    <table class="tickets-table table table-striped">
+<div class="table-container">
+    <table class="table">
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Тема</th>
+                <th>#</th>
+                <th>Заголовок</th>
                 <th>Создатель</th>
-                <th>Назначено</th>
+                <th>Исполнитель</th>
                 <th>Категория</th>
                 <th>Приоритет</th>
-                <th>Дата создания</th>
                 <th>Статус</th>
-                <th class="no-sort"></th>
+                <th>Создана</th>
+                <th>Действия</th>
             </tr>
         </thead>
         <tbody>
-            {% for ticket in tickets %}
-            <tr>
-                <td>{{ ticket.id }}</td>
-                <td>{{ ticket.title }}</td>
-                <td>{{ ticket.creator_name }}</td>
-                <td>{{ ticket.assignee or '-' }}</td>
-                <td>{{ ticket.category_name or '-' }}</td>
-                <td>
-                    {% if ticket.priority == 'low' %}
-                        <span class="badge bg-success">Низкий</span>
-                    {% elif ticket.priority == 'normal' %}
-                        <span class="badge bg-primary">Средний</span>
-                    {% elif ticket.priority == 'high' %}
-                        <span class="badge bg-danger">Высокий</span>
-                    {% else %}
-                        <span class="badge bg-secondary">Не указан</span>
-                    {% endif %}
-                </td>
-                <td>{{ ticket.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
-                <td>
-                    <span class="badge badge-{% if ticket.status == 'new' %}primary{% elif ticket.status == 'in_progress' %}warning{% elif ticket.status == 'resolved' %}success{% else %}secondary{% endif %}">
-                        {% if ticket.status == 'new' %}
-                            Новая
-                        {% elif ticket.status == 'in_progress' %}
-                            В работе
-                        {% elif ticket.status == 'resolved' %}
-                            Решена
-                        {% else %}
-                            Закрыта
-                        {% endif %}
-                    </span>
-                </td>
-                <td>
-                    <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="btn btn-view">Просмотр</a>
-                </td>
-            </tr>
-            {% endfor %}
+            {% if tickets %}
+                {% for ticket in tickets %}
+                <tr>
+                    <td>{{ ticket.id }}</td>
+                    <td>
+                        <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}">
+                            {{ ticket.title }}
+                        </a>
+                    </td>
+                    <td>{{ ticket.creator_name }}</td>
+                    <td>{{ ticket.assignee }}</td>
+                    <td>{{ ticket.category_name }}</td>
+                    <td>
+                        <span class="badge priority-{{ ticket.priority }}">
+                            {{ ticket.priority }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge status-{{ ticket.status }}">
+                            {{ ticket.status }}
+                        </span>
+                    </td>
+                    <td>{{ ticket.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                    <td>
+                        <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="9" class="text-center py-4">Заявки не найдены</td>
+                </tr>
+            {% endif %}
         </tbody>
     </table>
 </div>
 
-<div class="pagination mt-4">
-    {% if has_prev %}
-    <a href="#" data-page="{{ page-1 }}" class="btn btn-secondary btn-sm">Предыдущая</a>
-    {% endif %}
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<div class="pagination-container">
+    <nav aria-label="Pagination">
+        <ul class="pagination">
+            <li class="page-item {% if not has_prev %}disabled{% endif %}">
+                <a class="page-link" href="#" data-page="{{ page - 1 }}" {% if not has_prev %}tabindex="-1" aria-disabled="true"{% endif %}>
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
 
-    <span class="pagination-info">Страница {{ page }} из {{ total_pages }}</span>
+            {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                    <a class="page-link" href="#" data-page="{{ p }}">{{ p }}</a>
+                </li>
+            {% endfor %}
 
-    {% if has_next %}
-    <a href="#" data-page="{{ page+1 }}" class="btn btn-secondary btn-sm">Следующая</a>
-    {% endif %}
+            <li class="page-item {% if not has_next %}disabled{% endif %}">
+                <a class="page-link" href="#" data-page="{{ page + 1 }}" {% if not has_next %}tabindex="-1" aria-disabled="true"{% endif %}>
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
 </div>
-{% else %}
-<p class="text-center">Нет заявок для отображения</p>
 {% endif %}
